@@ -37,10 +37,11 @@ export class UsersService {
     // Hash password
     const hashedPassword = await this.hashPassword(password);
     
-    // Create common user data
+    // Create common user data with type explicitly included
     const userData = {
       ...createUserDto,
       password: hashedPassword,
+      type: type, // Explicitly set the type field
     };
     
     // Create specific user type
@@ -63,6 +64,12 @@ export class UsersService {
         throw new BadRequestException('Invalid user type');
     }
     
+    console.log('Creating user with data:', {
+      ...userData,
+      password: '[REDACTED]'
+    });
+    
+    // Save the user and return it
     return this.usersRepository.save(user);
   }
 
@@ -71,15 +78,92 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    const user = await this.usersRepository.findOne({ where: { id } });
-    if (!user) {
+    try {
+      // First try in the base repository
+      const user = await this.usersRepository.findOneOrFail({
+        where: { id },
+      });
+      
+      // If found, check which type it is and load it from the specific repository
+      if (user) {
+        const type = (user as any).type;
+        console.log(`User found with type: ${type}`);
+        
+        // Load from specific repository based on type
+        let specificUser: User;
+        switch (type) {
+          case 'admin':
+            specificUser = await this.adminRepository.findOneOrFail({ where: { id } });
+            break;
+          case 'accountant':
+            specificUser = await this.accountantRepository.findOneOrFail({ where: { id } });
+            break;
+          case 'finance':
+            specificUser = await this.financeRepository.findOneOrFail({ where: { id } });
+            break;
+          case 'finance_director':
+            specificUser = await this.financeDirectorRepository.findOneOrFail({ where: { id } });
+            break;
+          default:
+            return user; // Return base user if type not recognized
+        }
+        
+        return specificUser;
+      }
+      
+      return user;
+    } catch (error) {
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
-    return user;
   }
 
   async findByEmail(email: string): Promise<User | null> {
-    return this.usersRepository.findOne({ where: { email } });
+    // First try to find in base repository
+    const user = await this.usersRepository.findOne({
+      where: { email },
+    });
+    
+    if (!user) return null;
+    
+    // Get the user type
+    const type = (user as any).type;
+    console.log(`User found by email with type: ${type}`);
+    
+    // Load from specific repository based on type
+    let specificUser: User;
+    try {
+      switch (type) {
+        case 'admin':
+          specificUser = await this.adminRepository.findOneOrFail({ where: { id: user.id } });
+          break;
+        case 'accountant':
+          specificUser = await this.accountantRepository.findOneOrFail({ where: { id: user.id } });
+          break;
+        case 'finance':
+          specificUser = await this.financeRepository.findOneOrFail({ where: { id: user.id } });
+          break;
+        case 'finance_director':
+          specificUser = await this.financeDirectorRepository.findOneOrFail({ where: { id: user.id } });
+          break;
+        default:
+          return user; // Return base user if type not recognized
+      }
+      
+      return specificUser;
+    } catch (error) {
+      console.error('Error loading specific user:', error);
+      return user; // Fallback to base user
+    }
+  }
+
+  async update(id: string, updateData: Partial<User>): Promise<User> {
+    const user = await this.findOne(id);
+    
+    // Update fields
+    Object.assign(user, updateData);
+    
+    // Save changes
+    return this.usersRepository.save(user);
   }
 
   private async hashPassword(password: string): Promise<string> {
