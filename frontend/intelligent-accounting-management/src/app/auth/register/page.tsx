@@ -62,6 +62,7 @@ export default function Register() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent multiple submissions
     
     // Validate that passwords match
     if (formData.password !== formData.confirmPassword) {
@@ -74,8 +75,8 @@ export default function Register() {
       return;
     }
     
+    setLoading(true);
     try {
-      setLoading(true);
       const user = await register(formData.name, formData.email, formData.password, formData.type);
       
       toast.current?.show({
@@ -85,7 +86,7 @@ export default function Register() {
         life: 3000
       });
       
-      // Redirect to dashboard after a short delay
+      // Add explicit redirect after success
       setTimeout(() => {
         router.push('/dashboard');
       }, 1500);
@@ -96,8 +97,7 @@ export default function Register() {
         detail: error.response?.data?.message || 'Registration failed',
         life: 3000
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
   };
 
