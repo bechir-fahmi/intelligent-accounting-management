@@ -4,6 +4,7 @@ import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
 import { UsersService } from '../../users/users.service';
 import { Request } from 'express';
+import { UserType } from '../../users/user-type.enum';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -27,6 +28,21 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (!user) {
       throw new UnauthorizedException('Invalid token');
     }
+    
+    // Validate user type
+    const userType = user.type;
+    const validTypes = Object.values(UserType);
+    
+    if (!validTypes.includes(userType as UserType)) {
+      console.log(`Invalid user type in token: ${userType}. Valid types are: ${validTypes.join(', ')}`);
+      throw new UnauthorizedException('Invalid user type');
+    }
+    
+    // Make sure the user type is included when returning the user
+    if (!user.type && payload.type) {
+      (user as any).__type = payload.type;
+    }
+    
     return user;
   }
 } 
