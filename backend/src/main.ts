@@ -1,5 +1,5 @@
 import { NestFactory } from '@nestjs/core';
-import { ValidationPipe } from '@nestjs/common';
+import { ValidationPipe, ClassSerializerInterceptor } from '@nestjs/common';
 import * as cookieParser from 'cookie-parser';
 import { AppModule } from './app.module';
 
@@ -13,9 +13,16 @@ async function bootstrap() {
     transform: true,
   }));
   
-  // Enable CORS
+  // Use class serializer interceptor globally
+  app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get('Reflector')));
+  
+  // Enable CORS with support for multiple origins
+  const corsOrigins = process.env.CORS_ORIGIN 
+    ? process.env.CORS_ORIGIN.split(',') 
+    : ['http://localhost:3000', 'http://localhost:3001'];
+  
   app.enableCors({
-    origin: process.env.CORS_ORIGIN || 'http://localhost:3000',
+    origin: corsOrigins,
     credentials: true,
   });
   
