@@ -1,7 +1,8 @@
 import { ChildEntity } from 'typeorm';
 import { User } from './user.entity';
+import { UserType } from '../user-type.enum';
 
-@ChildEntity('admin')
+@ChildEntity(UserType.ADMIN)
 export class Admin extends User {
   // Admin-specific methods
   manageUsers() {
