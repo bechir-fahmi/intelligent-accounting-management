@@ -44,32 +44,32 @@ export default function Login() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return; // Prevent multiple submissions
     
+    setLoading(true);
     try {
-      setLoading(true);
       const user = await login(formData.email, formData.password);
       
-      // Show success message
       toast.current?.show({
         severity: 'success',
         summary: 'Login Successful',
-        detail: `Welcome back, ${user.name}!`,
+        detail: 'You have been logged in successfully',
         life: 1500
       });
       
-      // Redirect after a short delay
+      // Add explicit redirect after short delay
       setTimeout(() => {
         router.push('/dashboard');
       }, 1500);
+      // Keep loading true during redirect
     } catch (error: any) {
       toast.current?.show({
         severity: 'error',
         summary: 'Login Failed',
-        detail: error.response?.data?.message || 'Invalid credentials',
+        detail: error.response?.data?.message || 'Authentication failed',
         life: 3000
       });
-    } finally {
-      setLoading(false);
+      setLoading(false); // Only set loading to false on error
     }
   };
 
