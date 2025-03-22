@@ -1,9 +1,15 @@
 import { ChildEntity } from 'typeorm';
 import { User } from './user.entity';
+import { UserType } from '../user-type.enum';
 
-@ChildEntity('accountant')
+@ChildEntity(UserType.ACCOUNTANT)
 export class Accountant extends User {
   // Accountant-specific methods
+  processAccounting() {
+    // Implementation
+    return 'Processing accounting';
+  }
+
   generateReport() {
     // Implementation
     return 'Generating report';
