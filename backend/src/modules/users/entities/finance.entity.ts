@@ -1,7 +1,8 @@
 import { ChildEntity } from 'typeorm';
 import { User } from './user.entity';
+import { UserType } from '../user-type.enum';
 
-@ChildEntity('finance')
+@ChildEntity(UserType.FINANCE)
 export class Finance extends User {
   // Finance-specific methods
   uploadDocument(doc: any) {
@@ -17,5 +18,15 @@ export class Finance extends User {
   generateReport() {
     // Implementation
     return 'Generating report';
+  }
+
+  processPayments() {
+    // Implementation
+    return 'Processing payments';
+  }
+
+  reviewFinancials() {
+    // Implementation
+    return 'Reviewing financials';
   }
 } 
