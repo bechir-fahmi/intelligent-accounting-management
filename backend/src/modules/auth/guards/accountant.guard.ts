@@ -1,10 +1,10 @@
 import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
-import { Accountant } from '../../users/entities/accountant.entity';
+import { UserType } from '../../users/user-type.enum';
 
 @Injectable()
 export class AccountantGuard implements CanActivate {
   canActivate(context: ExecutionContext): boolean {
     const { user } = context.switchToHttp().getRequest();
-    return user instanceof Accountant;
+    return user?.type === UserType.ACCOUNTANT;
   }
 } 
