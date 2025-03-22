@@ -1,16 +1,17 @@
 import { ChildEntity } from 'typeorm';
 import { User } from './user.entity';
+import { UserType } from '../user-type.enum';
 
-@ChildEntity('finance_director')
+@ChildEntity(UserType.FINANCE_DIRECTOR)
 export class FinanceDirector extends User {
-  // FinanceDirector-specific methods
-  approveReport(report: any) {
+  // Finance Director-specific methods
+  approveBudgets() {
     // Implementation
-    return 'Approving report';
+    return 'Approving budgets';
   }
 
-  rejectReport(report: any) {
+  manageFinancialRisk() {
     // Implementation
-    return 'Rejecting report';
+    return 'Managing financial risk';
   }
 } 
