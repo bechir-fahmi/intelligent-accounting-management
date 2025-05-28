@@ -9,6 +9,9 @@ import { Finance } from './entities/finance.entity';
 import { FinanceDirector } from './entities/finance-director.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { UserType } from './user-type.enum';
+import { EmailService } from '../email/email.service';
+import { ProfileResponseDto } from './dto/profile-response.dto';
+import { plainToClass } from 'class-transformer';
 
 @Injectable()
 export class UsersService {
@@ -23,10 +26,11 @@ export class UsersService {
     private readonly financeRepository: Repository<Finance>,
     @InjectRepository(FinanceDirector)
     private readonly financeDirectorRepository: Repository<FinanceDirector>,
+    private readonly emailService: EmailService,
   ) {}
 
   async create(createUserDto: CreateUserDto): Promise<User> {
-    const { email, password, type } = createUserDto;
+    const { email, password, type, name } = createUserDto;
     
     // Check if user already exists
     const existingUser = await this.findByEmail(email);
@@ -64,13 +68,19 @@ export class UsersService {
         throw new BadRequestException('Invalid user type');
     }
     
-    console.log('Creating user with data:', {
-      ...userData,
-      password: '[REDACTED]'
-    });
+    // Save the user
+    const savedUser = await this.usersRepository.save(user);
     
-    // Save the user and return it
-    return this.usersRepository.save(user);
+    // Send welcome email with password
+    try {
+      await this.emailService.sendUserCreationEmail(email, name || email, password);
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // We don't throw here to prevent user creation from failing if email sending fails
+    }
+    
+    // Return the saved user
+    return savedUser;
   }
 
   async findAll(): Promise<User[]> {
@@ -78,41 +88,50 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
+    if (!id) {
+      throw new NotFoundException('User ID is required');
+    }
+    
     try {
       // First try in the base repository
-      const user = await this.usersRepository.findOneOrFail({
+      const user = await this.usersRepository.findOne({
         where: { id },
       });
       
+      if (!user) {
+        throw new NotFoundException(`User with ID "${id}" not found`);
+      }
+      
       // If found, check which type it is and load it from the specific repository
-      if (user) {
-        const type = (user as any).type;
-        console.log(`User found with type: ${type}`);
-        
-        // Load from specific repository based on type
-        let specificUser: User;
+      const type = (user as any).type;
+      
+      // Load from specific repository based on type
+      let specificUser: User;
+      try {
         switch (type) {
           case 'admin':
-            specificUser = await this.adminRepository.findOneOrFail({ where: { id } });
+            specificUser = await this.adminRepository.findOne({ where: { id } });
             break;
           case 'accountant':
-            specificUser = await this.accountantRepository.findOneOrFail({ where: { id } });
+            specificUser = await this.accountantRepository.findOne({ where: { id } });
             break;
           case 'finance':
-            specificUser = await this.financeRepository.findOneOrFail({ where: { id } });
+            specificUser = await this.financeRepository.findOne({ where: { id } });
             break;
           case 'finance_director':
-            specificUser = await this.financeDirectorRepository.findOneOrFail({ where: { id } });
+            specificUser = await this.financeDirectorRepository.findOne({ where: { id } });
             break;
           default:
             return user; // Return base user if type not recognized
         }
         
-        return specificUser;
+        return specificUser || user; // Fallback to base user if specific type not found
+      } catch (error) {
+        console.error('Error loading specific user type:', error);
+        return user; // Fallback to base user
       }
-      
-      return user;
     } catch (error) {
+      console.error(`Error finding user with ID ${id}:`, error);
       throw new NotFoundException(`User with ID "${id}" not found`);
     }
   }
@@ -127,7 +146,6 @@ export class UsersService {
     
     // Get the user type
     const type = (user as any).type;
-    console.log(`User found by email with type: ${type}`);
     
     // Load from specific repository based on type
     let specificUser: User;
@@ -166,8 +184,66 @@ export class UsersService {
     return this.usersRepository.save(user);
   }
 
+  async remove(id: string): Promise<boolean> {
+    const user = await this.findOne(id);
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID "${id}" not found`);
+    }
+    
+    // Delete the user
+    await this.usersRepository.remove(user);
+    
+    return true;
+  }
+
   private async hashPassword(password: string): Promise<string> {
     const salt = await bcrypt.genSalt(10);
     return bcrypt.hash(password, salt);
   }
-} 
+
+  // Add a new method to find user by token
+  async findByToken(token: string): Promise<User> {
+    // In a real implementation, we'd have a token store or lookup mechanism
+    // For now, we'll use the ID in the token directly if we can parse it
+    
+    try {
+      // For simplicity, if we have a raw token that's the Authentication cookie value
+      // we're just going to use it directly as a user ID.
+      // In a real implementation, you'd want to validate this token properly.
+      
+      // First check if any users match this ID directly
+      try {
+        const user = await this.findOne(token);
+        if (user) {
+          return user;
+        }
+      } catch (e) {
+        // Token is not a valid user ID
+      }
+      
+      // If not found, we could have additional lookup mechanisms here
+      
+      throw new NotFoundException('No user found for the provided token');
+    } catch (error) {
+      console.error('Error finding user by token:', error);
+      throw new NotFoundException('Invalid authentication token');
+    }
+  }
+
+  async getDetailedProfile(userId: string): Promise<ProfileResponseDto> {
+    const user = await this.findOne(userId);
+    
+    if (!user) {
+      throw new NotFoundException(`User with ID "${userId}" not found`);
+    }
+    
+    // Get additional fields based on user type if needed
+    // For now, we'll just return the basic profile data
+    // This can be extended to include type-specific fields later
+    
+    return plainToClass(ProfileResponseDto, user, { 
+      excludeExtraneousValues: true,
+    });
+  }
+}

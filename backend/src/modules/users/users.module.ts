@@ -7,6 +7,7 @@ import { Admin } from './entities/admin.entity';
 import { Accountant } from './entities/accountant.entity';
 import { Finance } from './entities/finance.entity';
 import { FinanceDirector } from './entities/finance-director.entity';
+import { EmailModule } from '../email/email.module';
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { FinanceDirector } from './entities/finance-director.entity';
       Finance,
       FinanceDirector,
     ]),
+    EmailModule,
   ],
   providers: [UsersService],
   controllers: [UsersController],
