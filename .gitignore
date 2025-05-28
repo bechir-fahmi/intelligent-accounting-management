@@ -42,3 +42,8 @@ docker-compose.override.yml
 frontend/node_modules/  
 frontend/build/  
 frontend/dist/  
+
+
+# AI models 
+ai_models/
+
