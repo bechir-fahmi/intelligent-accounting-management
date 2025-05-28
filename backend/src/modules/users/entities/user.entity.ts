@@ -1,5 +1,7 @@
-import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, TableInheritance, UpdateDateColumn } from 'typeorm';
+import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, TableInheritance, UpdateDateColumn, OneToMany } from 'typeorm';
 import { Exclude, Expose } from 'class-transformer';
+import { UserType } from '../user-type.enum';
+import { Document } from '../../documents/entities/document.entity';
 
 @Entity('users')
 @TableInheritance({ column: { type: 'varchar', name: 'type' } })
@@ -24,7 +26,14 @@ export abstract class User {
   updatedAt: Date;
   
   // This is the discriminator column that TypeORM will manage automatically
-  @Column()
+  @Column({
+    type: 'enum',
+    enum: UserType,
+    default: UserType.FINANCE
+  })
   @Expose()
-  type: string;
+  type: UserType;
+
+  @OneToMany(() => Document, document => document.uploadedBy)
+  documents: Document[];
 }
