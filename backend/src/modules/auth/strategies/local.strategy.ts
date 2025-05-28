@@ -17,14 +17,6 @@ export class LocalStrategy extends PassportStrategy(Strategy) {
       throw new UnauthorizedException('Invalid email or password');
     }
     
-    // Ensure we're returning the complete user object with its type
-    console.log('Local strategy validate user:', {
-      id: user.id,
-      email: user.email,
-      type: user.type,
-      constructor: user.constructor.name,
-    });
-    
     return user;
   }
-} 
+}
