@@ -17,13 +17,12 @@ async function bootstrap() {
   app.useGlobalInterceptors(new ClassSerializerInterceptor(app.get('Reflector')));
   
   // Enable CORS with support for multiple origins
-  const corsOrigins = process.env.CORS_ORIGIN 
-    ? process.env.CORS_ORIGIN.split(',') 
-    : ['http://localhost:3000', 'http://localhost:3001'];
-  
   app.enableCors({
-    origin: corsOrigins,
+    origin: true, // Allow all origins in development
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    exposedHeaders: ['Set-Cookie'],
   });
   
   // Use cookie parser
@@ -33,7 +32,6 @@ async function bootstrap() {
   app.setGlobalPrefix('api');
   
   await app.listen(process.env.PORT || 3000);
-  
-  console.log(`Application running on port ${process.env.PORT || 3000}`);
+  console.log(`Application is running on: ${await app.getUrl()}`);
 }
 bootstrap();
