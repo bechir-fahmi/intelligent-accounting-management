@@ -7,7 +7,8 @@ import {
   Request, 
   UseGuards, 
   UseInterceptors,
-  ClassSerializerInterceptor
+  ClassSerializerInterceptor,
+  Get
 } from '@nestjs/common';
 import { Response } from 'express';
 import { AuthService } from './auth.service';
@@ -45,5 +46,11 @@ export class AuthController {
   @HttpCode(200)
   async logout(@Res({ passthrough: true }) response: Response) {
     return this.authService.logout(response);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('me')
+  async getCurrentUser(@Request() req) {
+    return this.authService.getCurrentUser(req.user);
   }
 } 
