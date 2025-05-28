@@ -47,3 +47,7 @@ frontend/dist/
 # AI models 
 ai_models/
 
+# Docs
+docs/
+
+
