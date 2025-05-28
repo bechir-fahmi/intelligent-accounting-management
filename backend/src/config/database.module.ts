@@ -9,7 +9,6 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
       inject: [ConfigService],
       useFactory: (configService: ConfigService) => {
         const synchronize = configService.get('DATABASE_SYNCHRONIZE') === 'true';
-        console.log('Database synchronize:', synchronize);
         
         return {
           type: 'postgres',
