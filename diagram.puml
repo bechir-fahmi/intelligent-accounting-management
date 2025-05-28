@@ -1,0 +1,100 @@
+@startuml
+
+abstract class User {
+  UUID id
+  string name
+  string email
+  string password
+}
+
+class Admin {
+  manageUsers()
+  configureSystem()
+}
+
+class Accountant {
+  Report generateReport()
+  validateDocument(ExtractedData data)
+}
+
+class Finance {
+  uploadDocument(Document doc)
+  validateDocument(ExtractedData data)
+  Report generateReport()
+}
+
+class FinanceDirector {
+  approveReport(Report report)
+  rejectReport(Report report)
+}
+
+User <|-- Admin
+User <|-- Accountant
+User <|-- Finance
+User <|-- FinanceDirector
+
+class Document {
+  UUID id
+  string name
+  DocumentType type
+  DateTime uploadDate
+  DocumentStatus status
+  User uploadedBy
+}
+
+enum DocumentType {
+  Invoice
+  Quote
+  PurchaseOrder
+}
+
+enum DocumentStatus {
+  Pending
+  Processed
+  Validated
+}
+
+class "AI Processing System" {
+  UUID id
+  ExtractedData processDocument(Document document)
+  DocumentType classifyDocument(Document document)
+}
+
+class ExtractedData {
+  UUID id
+  UUID documentId
+  string extractedText
+  map<string, string> extractedFields
+}
+
+class Report {
+  UUID id
+  User generatedBy
+  ReportType reportType
+  DateTime createdAt
+  JSON data
+}
+
+enum ReportType {
+  Financial
+  Tax
+  Summary
+}
+
+class "Cloud Storage" {
+  UUID id
+  URL uploadFile(Document file)
+  Document retrieveFile(UUID documentId)
+}
+
+Finance --> "1..*" Document : uploads
+"AI Processing System" --> "1..*" Document : processes & classifies
+Document --> ExtractedData : generates
+ExtractedData --> Finance : validates (first-level)
+ExtractedData --> Accountant : validates (final validation)
+Accountant --> Report : generates
+Finance --> Report : can generate
+FinanceDirector --> Report : approves/rejects
+"Cloud Storage" --> Document : stores & retrieves
+
+@enduml
