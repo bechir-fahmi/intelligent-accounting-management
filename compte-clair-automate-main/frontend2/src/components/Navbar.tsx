@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, User, Users, Lock, FileText } from 'lucide-react';
+import { LogOut, User, Users, Lock, FileText, BarChart3 } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 
 const Navbar = () => {
@@ -37,6 +37,13 @@ const Navbar = () => {
                 className={`${location.pathname === '/upload' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 Importer
+              </Link>
+              <Link 
+                to="/reporting" 
+                className={`${location.pathname === '/reporting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                <BarChart3 className="h-4 w-4 mr-1" />
+                Rapports
               </Link>
               
               {/* Menu uniquement visible pour les administrateurs */}
