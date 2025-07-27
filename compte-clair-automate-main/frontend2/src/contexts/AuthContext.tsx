@@ -1,18 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import axios from 'axios';
-
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  type: string;
-  profileImage?: string;
-}
+import { User } from '@/types/user';
+import { api } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => Promise<void>;
+  logout: () => void;
+  updateUser: (user: User) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
   isComptable: boolean;
@@ -24,16 +18,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isInitialized, setIsInitialized] = useState(false);
-
-  // Initialize axios with base URL
-  const api = axios.create({
-    baseURL: 'http://localhost:3000/api',
-    withCredentials: true,
-    headers: {
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-    },
-  });
 
   // Add response interceptor for error handling
   api.interceptors.response.use(
@@ -102,21 +86,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = async () => {
-    try {
-      await api.post('/auth/logout');
-      setUser(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
+  const logout = () => {
+    setUser(null);
+    api.post('/auth/logout');
+  };
+
+  const updateUser = (updatedUser: User) => {
+    setUser(updatedUser);
   };
 
   const isAdmin = user?.type === 'admin';
   const isComptable = user?.type === 'comptable';
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, isAuthenticated, isAdmin, isComptable }}>
+    <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated, isAdmin, isComptable }}>
       {children}
     </AuthContext.Provider>
   );
