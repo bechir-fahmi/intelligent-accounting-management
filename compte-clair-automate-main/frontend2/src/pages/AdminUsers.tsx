@@ -7,20 +7,24 @@ import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import { Users, Plus, Edit, Trash } from 'lucide-react';
+import { Users, Plus, Edit, Trash, Mail } from 'lucide-react';
 import { toast } from "@/hooks/use-toast";
 import { usersService, User, CreateUserDto, UpdateUserDto, USER_ROLES } from '@/services/users.service';
+import { generateRandomPassword } from '@/lib/utils';
+import PasswordDisplay from '@/components/PasswordDisplay';
 
 const AdminUsers = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isPasswordDialogOpen, setIsPasswordDialogOpen] = useState(false);
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [newUser, setNewUser] = useState<CreateUserDto>({
+  const [generatedPassword, setGeneratedPassword] = useState('');
+
+  const [newUser, setNewUser] = useState<Omit<CreateUserDto, 'password'>>({
     name: '',
     email: '',
-    password: '',
     type: 'accountant'
   });
 
@@ -47,17 +51,31 @@ const AdminUsers = () => {
   };
 
   const handleAddUser = async () => {
-    try {
-      await usersService.createUser(newUser);
+    // Validation
+    if (!newUser.name.trim() || !newUser.email.trim()) {
       toast({
-        title: "Succès",
-        description: "Utilisateur créé avec succès",
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires",
+        variant: "destructive",
       });
+      return;
+    }
+
+    try {
+      const password = generateRandomPassword(8);
+      const userWithPassword: CreateUserDto = {
+        ...newUser,
+        password: password
+      };
+      
+      await usersService.createUser(userWithPassword);
+      
+      setGeneratedPassword(password);
       setIsAddDialogOpen(false);
+      setIsPasswordDialogOpen(true);
       setNewUser({
         name: '',
         email: '',
-        password: '',
         type: 'accountant'
       });
       fetchUsers();
@@ -123,6 +141,28 @@ const AdminUsers = () => {
   const openEditDialog = (user: User) => {
     setCurrentUser(user);
     setIsEditDialogOpen(true);
+  };
+
+  const handleResetPassword = async (user: User) => {
+    if (!window.confirm(`Êtes-vous sûr de vouloir envoyer un email de réinitialisation à ${user.email} ?`)) {
+      return;
+    }
+
+    try {
+      await usersService.forgotPassword(user.email);
+      
+      toast({
+        title: "Email envoyé",
+        description: `Un email de réinitialisation a été envoyé à ${user.email}`,
+      });
+    } catch (error) {
+      console.error('Error sending reset email:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'email de réinitialisation",
+        variant: "destructive",
+      });
+    }
   };
 
   const getRoleColor = (type: string) => {
@@ -205,6 +245,14 @@ const AdminUsers = () => {
                         <Button variant="outline" size="sm" onClick={() => openEditDialog(user)}>
                           <Edit className="h-4 w-4" />
                         </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={() => handleResetPassword(user)}
+                          title="Envoyer un email de réinitialisation"
+                        >
+                          <Mail className="h-4 w-4" />
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => handleDeleteUser(user.id)}>
                           <Trash className="h-4 w-4" />
                         </Button>
@@ -242,14 +290,10 @@ const AdminUsers = () => {
                 onChange={(e) => setNewUser({...newUser, email: e.target.value})}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
-              <Input 
-                id="password" 
-                type="password"
-                value={newUser.password}
-                onChange={(e) => setNewUser({...newUser, password: e.target.value})}
-              />
+            <div className="bg-blue-50 p-3 rounded-md">
+              <p className="text-sm text-blue-700">
+                <strong>Note:</strong> Un mot de passe sécurisé de 8 caractères sera généré automatiquement pour cet utilisateur.
+              </p>
             </div>
             <div className="space-y-2">
               <Label htmlFor="type">Rôle</Label>
@@ -274,7 +318,10 @@ const AdminUsers = () => {
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
               Annuler
             </Button>
-            <Button onClick={handleAddUser}>
+            <Button 
+              onClick={handleAddUser}
+              disabled={!newUser.name.trim() || !newUser.email.trim()}
+            >
               Ajouter
             </Button>
           </DialogFooter>
@@ -332,6 +379,34 @@ const AdminUsers = () => {
             </Button>
             <Button onClick={handleUpdateUser}>
               Enregistrer
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog d'affichage du mot de passe généré */}
+      <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Utilisateur créé avec succès</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="bg-green-50 p-4 rounded-md">
+              <p className="text-sm text-green-700 mb-3">
+                L'utilisateur a été créé avec succès. Voici le mot de passe généré automatiquement :
+              </p>
+              <PasswordDisplay password={generatedPassword} />
+            </div>
+            <div className="bg-amber-50 p-3 rounded-md">
+              <p className="text-sm text-amber-700">
+                <strong>Important :</strong> Communiquez ce mot de passe à l'utilisateur de manière sécurisée. 
+                Il pourra le modifier lors de sa prochaine connexion.
+              </p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsPasswordDialogOpen(false)}>
+              Fermer
             </Button>
           </DialogFooter>
         </DialogContent>
