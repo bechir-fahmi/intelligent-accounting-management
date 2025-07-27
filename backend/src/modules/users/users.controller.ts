@@ -6,6 +6,8 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { User } from './entities/user.entity';
 import { UserType } from './user-type.enum';
 import { CreateUserDto } from './dto/create-user.dto';
+import { ForgotPasswordDto } from './dto/forgot-password.dto';
+import { ResetPasswordDto } from './dto/reset-password.dto';
 import { ProfileResponseDto } from './dto/profile-response.dto';
 
 @Controller('users')
@@ -152,5 +154,33 @@ export class UsersController {
       message: `Fixed ${updates.filter(u => !u.error).length} users with invalid types`,
       details: updates
     };
+  }
+
+  // Password Reset Endpoints (Public - no auth required)
+  @Post('forgot-password')
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto) {
+    try {
+      return await this.usersService.forgotPassword(forgotPasswordDto);
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to process password reset request');
+    }
+  }
+
+  @Post('reset-password')
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    try {
+      return await this.usersService.resetPassword(resetPasswordDto);
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to reset password');
+    }
+  }
+
+  @Get('validate-reset-token/:token')
+  async validateResetToken(@Param('token') token: string) {
+    try {
+      return await this.usersService.validateResetToken(token);
+    } catch (error) {
+      throw new BadRequestException(error.message || 'Failed to validate reset token');
+    }
   }
 } 
