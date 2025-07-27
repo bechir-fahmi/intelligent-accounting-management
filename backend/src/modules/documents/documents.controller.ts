@@ -3,6 +3,11 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { DocumentsService } from './documents.service';
 import { CreateDocumentDto } from './dto/create-document.dto';
 import { ShareDocumentDto } from './dto/share-document.dto';
+import { PaginationDto } from './dto/pagination.dto';
+import { AdvancedSearchDto } from './dto/advanced-search.dto';
+import { SemanticSearchDto } from './dto/semantic-search.dto';
+import { SmartSearchDto } from './dto/smart-search.dto';
+import { SimpleSearchDto } from './dto/simple-search.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request, Response } from 'express';
 import { User } from '../users/entities/user.entity';
@@ -43,11 +48,14 @@ export class DocumentsController {
   }
 
   @Get()
-  async findAll(@Req() req: Request & { user: User }) {
-    const documents = await this.documentsService.findAll(req.user);
+  async findAll(
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request & { user: User }
+  ) {
+    const result = await this.documentsService.findAll(req.user, paginationDto);
     
-    // Don't return the actual document data in the list
-    return documents.map(doc => ({
+    // Transform the documents data
+    const transformedData = result.data.map(doc => ({
       id: doc.id,
       originalName: doc.originalName,
       filename: doc.filename,
@@ -65,20 +73,27 @@ export class DocumentsController {
       finalPrediction: doc.finalPrediction,
       textExcerpt: doc.textExcerpt
     }));
+    
+    return {
+      data: transformedData,
+      pagination: result.pagination
+    };
   }
 
   @Get('search')
   async searchDocuments(
     @Query('query') query: string,
+    @Query() paginationDto: PaginationDto,
     @Req() req: Request & { user: User }
   ) {
     if (!query) {
       return { error: 'Search query is required' };
     }
-    const documents = await this.documentsService.searchSimilarDocuments(query, req.user);
     
-    // Don't return the actual document data in search results
-    return documents.map(doc => ({
+    const result = await this.documentsService.searchSimilarDocuments(query, req.user, paginationDto);
+    
+    // Transform the documents data
+    const transformedData = result.data.map(doc => ({
       id: doc.id,
       originalName: doc.originalName,
       filename: doc.filename,
@@ -96,6 +111,275 @@ export class DocumentsController {
       finalPrediction: doc.finalPrediction,
       textExcerpt: doc.textExcerpt
     }));
+    
+    return {
+      data: transformedData,
+      pagination: result.pagination
+    };
+  }
+
+  @Get('advanced-search')
+  async advancedSearch(
+    @Query() searchDto: AdvancedSearchDto,
+    @Query() paginationDto: PaginationDto,
+    @Req() req: Request & { user: User }
+  ) {
+    const result = await this.documentsService.advancedSearch(searchDto, req.user, paginationDto);
+    
+    // Transform the documents data
+    const transformedData = result.data.map(doc => ({
+      id: doc.id,
+      originalName: doc.originalName,
+      filename: doc.filename,
+      type: doc.type,
+      size: doc.size,
+      mimeType: doc.mimeType,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      description: doc.description,
+      isOwner: doc.uploadedBy.id === req.user.id,
+      isPublic: doc.isPublic,
+      hasSharedUsers: doc.sharedWith && doc.sharedWith.length > 0,
+      modelConfidence: doc.modelConfidence,
+      modelPrediction: doc.modelPrediction,
+      finalPrediction: doc.finalPrediction,
+      textExcerpt: doc.textExcerpt,
+      extractedInfo: doc.extractedInfo // Include extracted info in response
+    }));
+    
+    return {
+      data: transformedData,
+      pagination: result.pagination,
+      searchCriteria: searchDto // Include search criteria in response for reference
+    };
+  }
+
+  @Get('semantic-search-debug')
+  async semanticSearchDebug(@Query() query: any, @Req() req: Request & { user: User }) {
+    return {
+      message: 'Debug endpoint working',
+      queryReceived: query,
+      user: req.user?.id,
+      timestamp: new Date().toISOString()
+    };
+  }
+
+  @Get('semantic-search')
+  async semanticSearch(
+    @Query() allParams: any,
+    @Req() req: Request & { user: User }
+  ) {
+    try {
+      // Debug logging
+      console.log('🔍 Semantic Search Debug:');
+      console.log('All query params received:', allParams);
+      console.log('User:', req.user?.id);
+
+      // Manually extract and validate parameters
+      const searchDto: SemanticSearchDto = {
+        query: allParams.query,
+        similarityThreshold: allParams.similarityThreshold ? parseFloat(allParams.similarityThreshold) : 0.1,
+        documentType: allParams.documentType,
+        clientName: allParams.clientName,
+        dateFrom: allParams.dateFrom,
+        dateTo: allParams.dateTo,
+        maxResults: allParams.maxResults ? parseInt(allParams.maxResults) : 50
+      };
+
+      const paginationDto: PaginationDto = {
+        page: allParams.page ? parseInt(allParams.page) : 1,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10,
+        sortBy: allParams.sortBy || 'createdAt',
+        sortOrder: allParams.sortOrder || 'DESC'
+      };
+
+      console.log('Parsed searchDto:', searchDto);
+      console.log('Parsed paginationDto:', paginationDto);
+
+      if (!searchDto.query) {
+        return { error: 'Search query is required for semantic search' };
+      }
+
+      const result = await this.documentsService.semanticSearch(searchDto, req.user, paginationDto);
+      
+      // Transform the results to include similarity scores
+      const transformedData = result.data.map(item => ({
+        ...this.transformDocument(item.document, req.user.id),
+        similarity: item.similarity,
+        rank: item.rank
+      }));
+      
+      return {
+        data: transformedData,
+        pagination: result.pagination,
+        searchCriteria: searchDto,
+        searchType: 'semantic'
+      };
+    } catch (error) {
+      console.error('❌ Semantic search error:', error);
+      throw error;
+    }
+  }
+
+  @Get('hybrid-search')
+  async hybridSearch(
+    @Query() allParams: any,
+    @Req() req: Request & { user: User }
+  ) {
+    try {
+      // Manually extract and validate parameters
+      const searchDto: SemanticSearchDto = {
+        query: allParams.query,
+        similarityThreshold: allParams.similarityThreshold ? parseFloat(allParams.similarityThreshold) : 0.1,
+        documentType: allParams.documentType,
+        clientName: allParams.clientName,
+        dateFrom: allParams.dateFrom,
+        dateTo: allParams.dateTo,
+        maxResults: allParams.maxResults ? parseInt(allParams.maxResults) : 50
+      };
+
+      const paginationDto: PaginationDto = {
+        page: allParams.page ? parseInt(allParams.page) : 1,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10,
+        sortBy: allParams.sortBy || 'createdAt',
+        sortOrder: allParams.sortOrder || 'DESC'
+      };
+
+      if (!searchDto.query) {
+        return { error: 'Search query is required for hybrid search' };
+      }
+
+      const result = await this.documentsService.hybridSearch(searchDto, req.user, paginationDto);
+      
+      // Transform the results to include similarity scores
+      const transformedData = result.data.map(item => ({
+        ...this.transformDocument(item.document, req.user.id),
+        similarity: item.similarity,
+        rank: item.rank
+      }));
+      
+      return {
+        data: transformedData,
+        pagination: result.pagination,
+        searchCriteria: searchDto,
+        searchType: 'hybrid'
+      };
+    } catch (error) {
+      console.error('❌ Hybrid search error:', error);
+      throw error;
+    }
+  }
+
+  @Get('smart-search')
+  async smartSearch(
+    @Query() allParams: any,
+    @Req() req: Request & { user: User }
+  ) {
+    try {
+      // Parse parameters
+      const searchDto: SmartSearchDto = {
+        clientName: allParams.clientName,
+        year: allParams.year ? parseInt(allParams.year) : undefined,
+        query: allParams.query,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10
+      };
+
+      const paginationDto: PaginationDto = {
+        page: allParams.page ? parseInt(allParams.page) : 1,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10,
+        sortBy: allParams.sortBy || 'createdAt',
+        sortOrder: allParams.sortOrder || 'DESC'
+      };
+
+      console.log('🎯 Smart search params:', searchDto);
+
+      const result = await this.documentsService.smartSearch(searchDto, req.user, paginationDto);
+      
+      // Transform the results
+      const transformedData = result.data.map(item => ({
+        ...this.transformDocument(item.document, req.user.id),
+        matchType: item.matchType,
+        matchDetails: item.matchDetails
+      }));
+      
+      return {
+        data: transformedData,
+        pagination: result.pagination,
+        searchCriteria: searchDto,
+        searchType: 'smart'
+      };
+    } catch (error) {
+      console.error('❌ Smart search error:', error);
+      throw error;
+    }
+  }
+
+  @Get('simple-search')
+  async simpleSearch(
+    @Query() allParams: any,
+    @Req() req: Request & { user: User }
+  ) {
+    try {
+      // Parse parameters
+      const searchDto: SimpleSearchDto = {
+        clientName: allParams.clientName?.trim(),
+        date: allParams.date?.trim(),
+        similarityThreshold: allParams.similarityThreshold ? parseFloat(allParams.similarityThreshold) : 0.3,
+        exactClientMatch: allParams.exactClientMatch === 'true' || allParams.exactClientMatch === true,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10
+      };
+
+      const paginationDto: PaginationDto = {
+        page: allParams.page ? parseInt(allParams.page) : 1,
+        limit: allParams.limit ? parseInt(allParams.limit) : 10,
+        sortBy: 'similarity',
+        sortOrder: 'DESC'
+      };
+
+      console.log('🔍 Simple search params:', searchDto);
+
+      const result = await this.documentsService.simpleSemanticSearch(searchDto, req.user, paginationDto);
+      
+      // Transform the results
+      const transformedData = result.data.map(item => ({
+        ...this.transformDocument(item.document, req.user.id),
+        similarity: item.similarity,
+        rank: item.rank
+      }));
+      
+      return {
+        data: transformedData,
+        pagination: result.pagination,
+        searchCriteria: searchDto,
+        searchType: 'simple-semantic'
+      };
+    } catch (error) {
+      console.error('❌ Simple search error:', error);
+      throw error;
+    }
+  }
+
+  // Helper method to transform document data
+  private transformDocument(doc: any, userId: string) {
+    return {
+      id: doc.id,
+      originalName: doc.originalName,
+      filename: doc.filename,
+      type: doc.type,
+      size: doc.size,
+      mimeType: doc.mimeType,
+      createdAt: doc.createdAt,
+      updatedAt: doc.updatedAt,
+      description: doc.description,
+      isOwner: doc.uploadedBy.id === userId,
+      isPublic: doc.isPublic,
+      hasSharedUsers: doc.sharedWith && doc.sharedWith.length > 0,
+      modelConfidence: doc.modelConfidence,
+      modelPrediction: doc.modelPrediction,
+      finalPrediction: doc.finalPrediction,
+      textExcerpt: doc.textExcerpt,
+      extractedInfo: doc.extractedInfo
+    };
   }
 
   @Get(':id')

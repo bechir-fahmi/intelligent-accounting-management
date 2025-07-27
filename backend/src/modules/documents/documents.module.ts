@@ -5,6 +5,7 @@ import { DocumentsController } from './documents.controller';
 import { Document } from './entities/document.entity';
 import { CloudinaryModule } from '../cloudinary/cloudinary.module';
 import { User } from '../users/entities/user.entity';
+import { EmbeddingService } from './services/embedding.service';
 
 @Module({
   imports: [
@@ -12,7 +13,7 @@ import { User } from '../users/entities/user.entity';
     CloudinaryModule,
   ],
   controllers: [DocumentsController],
-  providers: [DocumentsService],
-  exports: [DocumentsService],
+  providers: [DocumentsService, EmbeddingService],
+  exports: [DocumentsService, EmbeddingService],
 })
 export class DocumentsModule {} 
