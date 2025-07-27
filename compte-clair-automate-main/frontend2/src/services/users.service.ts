@@ -1,31 +1,15 @@
-import axios from 'axios';
+import { api } from '@/lib/api';
+import { User } from '@/types/user';
 
-const api = axios.create({
-  baseURL: 'http://localhost:3000/api',
-  withCredentials: true,
-  headers: {
-    'Content-Type': 'application/json',
-    'Accept': 'application/json',
-  },
-});
-
-export type UserRole = 'admin' | 'accountant' | 'finance' | 'finance_director';
+export type UserRole = 'admin' | 'accountant' | 'finance' | 'finance_director' | 'comptable';
 
 export const USER_ROLES = [
   { label: 'Admin', value: 'admin' },
   { label: 'Accountant', value: 'accountant' },
   { label: 'Finance', value: 'finance' },
-  { label: 'Finance Director', value: 'finance_director' }
+  { label: 'Finance Director', value: 'finance_director' },
+  { label: 'Comptable', value: 'comptable' }
 ] as const;
-
-export interface User {
-  id: string;
-  name: string;
-  email: string;
-  type: UserRole;
-  createdAt: string;
-  updatedAt: string;
-}
 
 export interface CreateUserDto {
   name: string;
@@ -40,29 +24,62 @@ export interface UpdateUserDto {
   type?: UserRole;
 }
 
-export const usersService = {
-  getAllUsers: async (): Promise<User[]> => {
+export interface UpdateProfileDto {
+  name: string;
+  email: string;
+}
+
+export interface ChangePasswordDto {
+  currentPassword: string;
+  newPassword: string;
+}
+
+class UsersService {
+  async getAllUsers(): Promise<User[]> {
     const response = await api.get('/users');
     return response.data;
-  },
+  }
 
-  getUserById: async (id: string): Promise<User> => {
+  async getUserById(id: string): Promise<User> {
     const response = await api.get(`/users/${id}`);
     return response.data;
-  },
+  }
 
-  createUser: async (userData: CreateUserDto): Promise<User> => {
+  async createUser(userData: CreateUserDto): Promise<User> {
     const response = await api.post('/users', userData);
     return response.data;
-  },
+  }
 
-  updateUser: async (id: string, userData: UpdateUserDto): Promise<User> => {
+  async updateUser(id: string, userData: UpdateUserDto): Promise<User> {
     const response = await api.put(`/users/${id}`, userData);
     return response.data;
-  },
+  }
 
-  deleteUser: async (id: string): Promise<{ success: boolean; message: string }> => {
-    const response = await api.delete(`/users/${id}`);
+  async deleteUser(id: string): Promise<void> {
+    await api.delete(`/users/${id}`);
+  }
+
+  async updateProfile(data: UpdateProfileDto): Promise<User> {
+    const response = await api.put('/users/profile', data);
     return response.data;
-  },
-}; 
+  }
+
+  async changePassword(data: ChangePasswordDto): Promise<void> {
+    await api.put('/users/change-password', data);
+  }
+
+  async forgotPassword(email: string): Promise<void> {
+    await api.post('/users/forgot-password', { email });
+  }
+
+  async validateResetToken(token: string): Promise<{ valid: boolean }> {
+    const response = await api.get(`/users/validate-reset-token/${token}`);
+    return response.data;
+  }
+
+  async resetPassword(token: string, newPassword: string): Promise<void> {
+    await api.post('/users/reset-password', { token, newPassword });
+  }
+}
+
+export const usersService = new UsersService(); 
