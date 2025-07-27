@@ -13,6 +13,8 @@ import Upload from "./pages/Upload";
 import NotFound from "./pages/NotFound";
 import AdminUsers from "./pages/AdminUsers";
 import ComptableClients from "./pages/ComptableClients";
+import Reporting from "./pages/Reporting";
+import ResetPassword from "./pages/ResetPassword";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +28,7 @@ const App: React.FC = () => {
         <AuthProvider>
           <Routes>
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route
               path="/dashboard"
               element={
@@ -48,6 +51,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Upload />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reporting"
+              element={
+                <ProtectedRoute>
+                  <Reporting />
                 </ProtectedRoute>
               }
             />
