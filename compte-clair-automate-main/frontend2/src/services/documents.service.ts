@@ -52,15 +52,144 @@ export interface SharedUser {
   type: string;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+    hasNext: boolean;
+    hasPrev: boolean;
+  };
+}
+
+export interface SearchFilters {
+  query?: string;
+  clientName?: string;
+  documentType?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  sortBy?: string;
+  sortOrder?: 'ASC' | 'DESC';
+}
+
+export interface SemanticFieldSearchParams {
+  clientName?: string;
+  date?: string; // Actually contains year value, but backend expects 'date' parameter
+}
+
+// Alias for backward compatibility
+export interface SimpleSearchParams extends SemanticFieldSearchParams { }
+
+export interface SemanticSearchParams {
+  query: string;
+  similarityThreshold?: number;
+  maxResults?: number;
+}
+
 class DocumentsService {
-  async getAllDocuments(): Promise<Document[]> {
-    const response = await api.get('/documents');
+  async getAllDocuments(
+    page: number = 1,
+    limit: number = 10,
+    sortBy: string = 'createdAt',
+    sortOrder: 'ASC' | 'DESC' = 'DESC'
+  ): Promise<PaginatedResponse<Document>> {
+    const params = { page, limit, sortBy, sortOrder };
+    const response = await api.get('/documents', { params });
     return response.data;
+  }
+
+  // Check if advanced search features are available
+  async checkSearchCapabilities(): Promise<{
+    semantic: boolean;
+    hybrid: boolean;
+    advanced: boolean;
+    semanticFields: boolean;
+  }> {
+    const capabilities = {
+      semantic: false,
+      hybrid: false,
+      advanced: false,
+      semanticFields: true // Semantic field search (simple-search) is working
+    };
+
+    // Currently available: Semantic field search in extracted document data
+    // This searches in embeddings/extracted information like client names and dates
+    console.log('Using semantic field search (searches in extracted document data)');
+
+    return capabilities;
   }
 
   async getDocument(id: string): Promise<Document> {
     const response = await api.get(`/documents/${id}`);
     return response.data;
+  }
+
+  // Note: This endpoint is not available on the backend yet
+  async searchDocuments(query: string, page: number = 1, limit: number = 10): Promise<PaginatedResponse<Document>> {
+    console.warn('Text search endpoint not available, falling back to semantic field search');
+    // Fallback to semantic field search using the query as client name
+    return this.semanticFieldSearch({ clientName: query }, page, limit);
+  }
+
+  // Semantic search in extracted document information (embeddings)
+  async semanticFieldSearch(
+    params: SimpleSearchParams,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<Document>> {
+    const searchParams = { ...params, page, limit };
+    const response = await api.get('/documents/simple-search', { params: searchParams });
+    return response.data;
+  }
+
+  // Alias for backward compatibility
+  async simpleSearch(
+    params: SimpleSearchParams,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<Document>> {
+    return this.semanticFieldSearch(params, page, limit);
+  }
+
+  async advancedSearch(filters: SearchFilters, page: number = 1, limit: number = 10): Promise<PaginatedResponse<Document>> {
+    const params = { ...filters, page, limit };
+    const response = await api.get('/documents/advanced-search', { params });
+    return response.data;
+  }
+
+  async semanticSearch(
+    params: SemanticSearchParams,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<Document>> {
+    try {
+      const searchParams = { ...params, page, limit };
+      const response = await api.get('/documents/semantic-search', { params: searchParams });
+      return response.data;
+    } catch (error) {
+      console.warn('Semantic search not available, falling back to text search');
+      // Fallback to regular text search if semantic search is not available
+      return this.searchDocuments(params.query, page, limit);
+    }
+  }
+
+  async hybridSearch(
+    query: string,
+    filters?: Partial<SearchFilters>,
+    page: number = 1,
+    limit: number = 10
+  ): Promise<PaginatedResponse<Document>> {
+    try {
+      const params = { query, ...filters, page, limit };
+      const response = await api.get('/documents/hybrid-search', { params });
+      return response.data;
+    } catch (error) {
+      console.warn('Hybrid search not available, falling back to advanced search');
+      // Fallback to advanced search if hybrid search is not available
+      return this.advancedSearch({ query, ...filters }, page, limit);
+    }
   }
 
   async uploadDocument(file: File, data: CreateDocumentDto): Promise<Document> {
@@ -71,8 +200,8 @@ class DocumentsService {
     formData.append('originalName', data.originalName);
     formData.append('mimeType', data.mimeType);
     formData.append('size', data.size.toString());
-    formData.append('path', data.path);
-    formData.append('type', data.type);
+    if (data.path) formData.append('path', data.path);
+    if (data.type) formData.append('type', data.type);
     if (data.clientId) formData.append('clientId', data.clientId);
 
     const response = await api.post('/documents/upload', formData, {
@@ -126,12 +255,7 @@ class DocumentsService {
     return response.data;
   }
 
-  async searchDocuments(query: string): Promise<Document[]> {
-    const response = await api.get('/documents/search', {
-      params: { query },
-    });
-    return response.data;
-  }
+
 }
 
 export const documentsService = new DocumentsService(); 
