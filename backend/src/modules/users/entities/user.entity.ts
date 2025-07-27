@@ -36,4 +36,12 @@ export abstract class User {
 
   @OneToMany(() => Document, document => document.uploadedBy)
   documents: Document[];
+
+  @Column({ nullable: true })
+  @Exclude({ toPlainOnly: true })
+  resetPasswordToken?: string;
+
+  @Column({ nullable: true })
+  @Exclude({ toPlainOnly: true })
+  resetPasswordExpires?: Date;
 }
