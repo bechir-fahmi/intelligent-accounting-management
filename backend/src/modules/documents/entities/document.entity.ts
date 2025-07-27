@@ -1,6 +1,7 @@
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, CreateDateColumn, UpdateDateColumn, ManyToMany, JoinTable } from 'typeorm';
 import { User } from '../../users/entities/user.entity';
 import { DocumentType } from '../document-type.enum';
+import { VectorTransformer } from '../transformers/vector.transformer';
 
 @Entity()
 export class Document {
@@ -31,7 +32,7 @@ export class Document {
 
   @Column({ nullable: true })
   cloudinarySecureUrl: string;
-  
+
   @Column({ nullable: true })
   cloudinaryVersion: string;
 
@@ -56,11 +57,15 @@ export class Document {
 
   @Column({ default: true })
   isProcessed: boolean;
-  
-  // Keep these fields to avoid migration issues but mark as not used
-  @Column('float', { array: true, nullable: true })
+
+  // Vector embedding for semantic search (384 dimensions)
+  @Column('float', {
+    array: true,
+    nullable: true,
+    transformer: new VectorTransformer()
+  })
   embedding: number[];
-  
+
   @Column({ nullable: true })
   textContent: string;
 
@@ -95,4 +100,13 @@ export class Document {
 
   @Column({ nullable: true })
   textExcerpt: string;
+
+  // Extracted information from ML API
+  @Column('jsonb', { nullable: true })
+  extractedInfo: {
+    date?: string;
+    client_name?: string;
+    client_address?: string;
+    [key: string]: any;
+  };
 }
