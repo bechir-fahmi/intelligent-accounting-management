@@ -5,7 +5,7 @@ import { api } from '@/lib/api';
 interface AuthContextType {
   user: User | null;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   updateUser: (user: User) => void;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -86,9 +86,32 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const logout = () => {
-    setUser(null);
-    api.post('/auth/logout');
+  const logout = async () => {
+    try {
+      console.log('Starting logout process...');
+      
+      // Clear user state first to prevent any UI issues
+      setUser(null);
+      setIsAuthenticated(false);
+      
+      // Clear any stored tokens or session data
+      localStorage.removeItem('token');
+      sessionStorage.removeItem('token');
+      
+      // Call logout API (don't wait for it to complete)
+      api.post('/auth/logout').catch(error => {
+        console.error('Logout API call failed:', error);
+      });
+      
+      console.log('Logout completed, redirecting...');
+      
+      // Redirect to login page
+      window.location.href = '/login';
+    } catch (error) {
+      console.error('Logout process failed:', error);
+      // Force redirect even if something goes wrong
+      window.location.href = '/login';
+    }
   };
 
   const updateUser = (updatedUser: User) => {
