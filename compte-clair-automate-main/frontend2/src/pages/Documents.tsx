@@ -169,7 +169,10 @@ const Documents = () => {
     try {
       setLoading(true);
       const response = await documentsService.advancedSearch(
-        filters,
+        {
+          ...filters,
+          documentType: filters.documentType === 'all' ? '' : filters.documentType
+        },
         1,
         itemsPerPage
       );
