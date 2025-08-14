@@ -1,17 +1,41 @@
-import React, { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { Badge } from '@/components/ui/badge';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { SearchFilters, SemanticFieldSearchParams, SimpleSearchParams } from '@/services/documents.service';
-import { ChevronDown, ChevronUp, Search, X, Calendar as CalendarIcon, Filter } from 'lucide-react';
-import { format } from 'date-fns';
-import { fr } from 'date-fns/locale';
+import React, { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import { Badge } from "@/components/ui/badge";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  SearchFilters,
+  SemanticFieldSearchParams,
+} from "@/services/documents.service";
+import {
+  ChevronDown,
+  ChevronUp,
+  Search,
+  X,
+  Calendar as CalendarIcon,
+  Filter,
+} from "lucide-react";
+import { format } from "date-fns";
+import { fr } from "date-fns/locale";
 
 interface AdvancedSearchProps {
   onSearch: (filters: SearchFilters) => void;
@@ -20,16 +44,21 @@ interface AdvancedSearchProps {
   isLoading?: boolean;
 }
 
-const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFieldSearch, onClear, isLoading = false }) => {
+const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
+  onSearch,
+  onSemanticFieldSearch,
+  onClear,
+  isLoading = false,
+}) => {
   const [isOpen, setIsOpen] = useState(false);
   const [filters, setFilters] = useState<SearchFilters>({
-    query: '',
-    clientName: '',
-    documentType: '',
-    dateFrom: '',
-    dateTo: '',
-    sortBy: 'createdAt',
-    sortOrder: 'DESC'
+    query: "",
+    clientName: "",
+    documentType: "all",
+    dateFrom: "",
+    dateTo: "",
+    sortBy: "createdAt",
+    sortOrder: "DESC",
   });
   const [dateFrom, setDateFrom] = useState<Date | undefined>();
   const [dateTo, setDateTo] = useState<Date | undefined>();
@@ -37,41 +66,41 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
   const [useExactSearch, setUseExactSearch] = useState(true); // Default to exact search since it's the only one working
 
   const documentTypes = [
-    { value: 'invoice', label: 'Facture' },
-    { value: 'quote', label: 'Devis' },
-    { value: 'purchase_order', label: 'Bon de commande' },
-    { value: 'receipt', label: 'Reçu' },
-    { value: 'bank_statement', label: 'Relevé bancaire' },
-    { value: 'tax_document', label: 'Document fiscal' },
-    { value: 'delivery_note', label: 'Bon de livraison' },
-    { value: 'expense_report', label: 'Note de frais' },
-    { value: 'payslip', label: 'Fiche de paie' },
-    { value: 'other', label: 'Autre' }
+    { value: "invoice", label: "Facture" },
+    { value: "quote", label: "Devis" },
+    { value: "purchase_order", label: "Bon de commande" },
+    { value: "receipt", label: "Reçu" },
+    { value: "bank_statement", label: "Relevé bancaire" },
+    { value: "tax_document", label: "Document fiscal" },
+    { value: "delivery_note", label: "Bon de livraison" },
+    { value: "expense_report", label: "Note de frais" },
+    { value: "payslip", label: "Fiche de paie" },
+    { value: "other", label: "Autre" },
   ];
 
   const sortOptions = [
-    { value: 'createdAt', label: 'Date de création' },
-    { value: 'originalName', label: 'Nom du fichier' },
-    { value: 'type', label: 'Type de document' },
-    { value: 'size', label: 'Taille du fichier' }
+    { value: "createdAt", label: "Date de création" },
+    { value: "originalName", label: "Nom du fichier" },
+    { value: "type", label: "Type de document" },
+    { value: "size", label: "Taille du fichier" },
   ];
 
   const handleFilterChange = (key: keyof SearchFilters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handleDateChange = (type: 'from' | 'to', date: Date | undefined) => {
-    if (type === 'from') {
+  const handleDateChange = (type: "from" | "to", date: Date | undefined) => {
+    if (type === "from") {
       setDateFrom(date);
-      setFilters(prev => ({ 
-        ...prev, 
-        dateFrom: date ? format(date, 'yyyy-MM-dd') : '' 
+      setFilters((prev) => ({
+        ...prev,
+        dateFrom: date ? format(date, "yyyy-MM-dd") : "",
       }));
     } else {
       setDateTo(date);
-      setFilters(prev => ({ 
-        ...prev, 
-        dateTo: date ? format(date, 'yyyy-MM-dd') : '' 
+      setFilters((prev) => ({
+        ...prev,
+        dateTo: date ? format(date, "yyyy-MM-dd") : "",
       }));
     }
   };
@@ -82,7 +111,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
       const semanticParams: SemanticFieldSearchParams = {};
       if (filters.clientName) semanticParams.clientName = filters.clientName;
       if (exactDate) semanticParams.date = exactDate.getFullYear().toString();
-      
+
       onSemanticFieldSearch(semanticParams);
     } else {
       // Use advanced search for complex filtering (when available)
@@ -92,13 +121,13 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
 
   const handleClear = () => {
     setFilters({
-      query: '',
-      clientName: '',
-      documentType: '',
-      dateFrom: '',
-      dateTo: '',
-      sortBy: 'createdAt',
-      sortOrder: 'DESC'
+      query: "",
+      clientName: "",
+      documentType: "all",
+      dateFrom: "",
+      dateTo: "",
+      sortBy: "createdAt",
+      sortOrder: "DESC",
     });
     setDateFrom(undefined);
     setDateTo(undefined);
@@ -134,7 +163,8 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
                 <span>Recherche avancée</span>
                 {activeFiltersCount > 0 && (
                   <Badge variant="secondary" className="ml-2">
-                    {activeFiltersCount} filtre{activeFiltersCount > 1 ? 's' : ''}
+                    {activeFiltersCount} filtre
+                    {activeFiltersCount > 1 ? "s" : ""}
                   </Badge>
                 )}
               </div>
@@ -146,7 +176,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
             </CardTitle>
           </CardHeader>
         </CollapsibleTrigger>
-        
+
         <CollapsibleContent>
           <CardContent className="space-y-4">
             {/* Search Mode Toggle */}
@@ -159,38 +189,45 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
                   onChange={(e) => setUseExactSearch(e.target.checked)}
                   className="rounded"
                 />
-                <Label htmlFor="exactSearch" className="text-sm font-medium text-purple-800">
-                  🧠 Recherche sémantique dans les données extraites (Recommandée)
+                <Label
+                  htmlFor="exactSearch"
+                  className="text-sm font-medium text-purple-800"
+                >
+                  🧠 Recherche sémantique dans les données extraites
+                  (Recommandée)
                 </Label>
               </div>
               <div className="text-xs text-purple-700">
-                {useExactSearch 
-                  ? '✅ Recherche dans les informations extraites par IA (client_name, année, etc.)'
-                  : '⚠️ Recherche textuelle classique - Fonctionnalité en développement'
-                }
+                {useExactSearch
+                  ? "✅ Recherche dans les informations extraites par IA (client_name, année, etc.)"
+                  : "⚠️ Recherche textuelle classique - Fonctionnalité en développement"}
               </div>
             </div>
 
             {/* Basic Search */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="query">Recherche textuelle (Non disponible)</Label>
+                <Label htmlFor="query">
+                  Recherche textuelle (Non disponible)
+                </Label>
                 <Input
                   id="query"
                   placeholder="Fonctionnalité en développement..."
                   value={filters.query}
-                  onChange={(e) => handleFilterChange('query', e.target.value)}
+                  onChange={(e) => handleFilterChange("query", e.target.value)}
                   disabled={true}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="clientName">Nom du client</Label>
                 <Input
                   id="clientName"
                   placeholder="Nom ou entreprise du client"
                   value={filters.clientName}
-                  onChange={(e) => handleFilterChange('clientName', e.target.value)}
+                  onChange={(e) =>
+                    handleFilterChange("clientName", e.target.value)
+                  }
                 />
               </div>
             </div>
@@ -199,16 +236,18 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="documentType">Type de document</Label>
-                <Select 
-                  value={filters.documentType} 
-                  onValueChange={(value) => handleFilterChange('documentType', value)}
+                <Select
+                  value={filters.documentType}
+                  onValueChange={(value) =>
+                    handleFilterChange("documentType", value)
+                  }
                   disabled={useExactSearch}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Tous les types" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Tous les types</SelectItem>
+                    <SelectItem value="all">Tous les types</SelectItem>
                     {documentTypes.map((type) => (
                       <SelectItem key={type.value} value={type.value}>
                         {type.label}
@@ -226,7 +265,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
                     placeholder="Ex: 2025"
                     min="1900"
                     max="2099"
-                    value={exactDate ? new Date(exactDate).getFullYear() : ''}
+                    value={exactDate ? new Date(exactDate).getFullYear() : ""}
                     onChange={(e) => {
                       const year = e.target.value;
                       if (year && year.length === 4) {
@@ -248,14 +287,16 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
                           className="w-full justify-start text-left font-normal"
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateFrom ? format(dateFrom, 'dd/MM/yyyy', { locale: fr }) : 'Sélectionner'}
+                          {dateFrom
+                            ? format(dateFrom, "dd/MM/yyyy", { locale: fr })
+                            : "Sélectionner"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
                           selected={dateFrom}
-                          onSelect={(date) => handleDateChange('from', date)}
+                          onSelect={(date) => handleDateChange("from", date)}
                           initialFocus
                           locale={fr}
                         />
@@ -272,14 +313,16 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
                           className="w-full justify-start text-left font-normal"
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {dateTo ? format(dateTo, 'dd/MM/yyyy', { locale: fr }) : 'Sélectionner'}
+                          {dateTo
+                            ? format(dateTo, "dd/MM/yyyy", { locale: fr })
+                            : "Sélectionner"}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
                           selected={dateTo}
-                          onSelect={(date) => handleDateChange('to', date)}
+                          onSelect={(date) => handleDateChange("to", date)}
                           initialFocus
                           locale={fr}
                         />
@@ -295,9 +338,11 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="sortBy">Trier par</Label>
-                  <Select 
-                    value={filters.sortBy} 
-                    onValueChange={(value) => handleFilterChange('sortBy', value)}
+                  <Select
+                    value={filters.sortBy}
+                    onValueChange={(value) =>
+                      handleFilterChange("sortBy", value)
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -314,9 +359,11 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
 
                 <div className="space-y-2">
                   <Label htmlFor="sortOrder">Ordre</Label>
-                  <Select 
-                    value={filters.sortOrder} 
-                    onValueChange={(value) => handleFilterChange('sortOrder', value as 'ASC' | 'DESC')}
+                  <Select
+                    value={filters.sortOrder}
+                    onValueChange={(value) =>
+                      handleFilterChange("sortOrder", value as "ASC" | "DESC")
+                    }
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -338,7 +385,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({ onSearch, onSemanticFie
               </Button>
               <Button onClick={handleSearch} disabled={isLoading}>
                 <Search className="h-4 w-4 mr-2" />
-                {isLoading ? 'Recherche...' : 'Rechercher'}
+                {isLoading ? "Recherche..." : "Rechercher"}
               </Button>
             </div>
           </CardContent>
