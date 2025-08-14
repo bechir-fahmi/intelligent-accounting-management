@@ -255,6 +255,20 @@ class DocumentsService {
     return response.data;
   }
 
+  // Bilan generation
+  async generateBilan(documentIds: string[], periodDays: number): Promise<any> {
+    console.log('🚀 Frontend: Calling backend API with:', { documentIds, periodDays });
+    
+    const response = await api.post('/documents/generate-bilan', {
+      documentIds,
+      periodDays
+    });
+    
+    console.log('📥 Frontend: Received response from backend:', response.data);
+    
+    return response.data;
+  }
+
 
 }
 
