@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Users, Upload } from 'lucide-react';
 import DashboardCard from '@/components/DashboardCard';
 import FinancialChart from '@/components/FinancialChart';
+// import BilanDemo from '@/components/bilan/BilanDemo'; // Removed demo component
 import { documentsService } from '@/services/documents.service';
 import { usersService } from '@/services/users.service';
 
@@ -208,6 +209,8 @@ const Dashboard = () => {
           <div className="mb-8">
             <FinancialChart title="Flux de trésorerie" data={cashflowData} color="#10B981" />
           </div>
+
+          {/* Bilan Generation Feature - Demo removed, use /bilan route directly */}
 
           {/* Recent Activity */}
           <div className="bg-white shadow rounded-lg p-6">
