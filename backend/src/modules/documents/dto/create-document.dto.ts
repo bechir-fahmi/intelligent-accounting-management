@@ -3,24 +3,30 @@ import { DocumentType } from '../document-type.enum';
 import { Type } from 'class-transformer';
 
 export class CreateDocumentDto {
+  @IsOptional()
   @IsString()
-  filename: string;
+  filename?: string;
 
+  @IsOptional()
   @IsString()
-  originalName: string;
+  originalName?: string;
 
+  @IsOptional()
   @IsString()
-  mimeType: string;
+  mimeType?: string;
 
+  @IsOptional()
   @IsString()
-  path: string;
+  path?: string;
 
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
-  size: number;
+  size?: number;
 
+  @IsOptional()
   @IsEnum(DocumentType)
-  type: DocumentType;
+  type?: DocumentType;
 
   @IsOptional()
   @IsUUID()
