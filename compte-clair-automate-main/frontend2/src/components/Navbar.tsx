@@ -2,12 +2,13 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, User, Users, Lock, FileText, BarChart3 } from 'lucide-react';
+import { LogOut, User, Users, Lock, FileText, BarChart3, Calculator } from 'lucide-react';
 import UserAvatar from '@/components/UserAvatar';
 
 const Navbar = () => {
   const location = useLocation();
   const { user, logout, isAuthenticated, isAdmin, isComptable } = useAuth();
+  const [isLoggingOut, setIsLoggingOut] = React.useState(false);
   
   if (!isAuthenticated) return null;
   
@@ -44,6 +45,13 @@ const Navbar = () => {
               >
                 <BarChart3 className="h-4 w-4 mr-1" />
                 Rapports
+              </Link>
+              <Link 
+                to="/bilan" 
+                className={`${location.pathname === '/bilan' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
+              >
+                <Calculator className="h-4 w-4 mr-1" />
+                Bilan
               </Link>
               
               {/* Menu uniquement visible pour les administrateurs */}
@@ -84,9 +92,25 @@ const Navbar = () => {
                   </span>
                 </div>
               </div>
-              <Button variant="outline" size="sm" className="flex items-center" onClick={logout}>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center" 
+                disabled={isLoggingOut}
+                onClick={async () => {
+                  if (isLoggingOut) return;
+                  
+                  try {
+                    setIsLoggingOut(true);
+                    await logout();
+                  } catch (error) {
+                    console.error('Logout failed:', error);
+                    setIsLoggingOut(false);
+                  }
+                }}
+              >
                 <LogOut className="h-4 w-4 mr-1" />
-                Se déconnecter
+                {isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}
               </Button>
             </div>
           </div>
