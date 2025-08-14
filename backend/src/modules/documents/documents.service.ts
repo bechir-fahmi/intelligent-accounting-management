@@ -25,13 +25,13 @@ export class DocumentsService {
     private userRepository: Repository<User>,
     private cloudinaryService: CloudinaryService,
     private embeddingService: EmbeddingService,
-  ) {}
+  ) { }
 
   async create(createDocumentDto: CreateDocumentDto, user: User, file: Express.Multer.File): Promise<Document> {
     try {
       // Generate a unique ID for the file
       const uniqueId = `${Date.now()}-${Math.round(Math.random() * 1E9)}`;
-      
+
       // Upload directly to Cloudinary from memory with private type
       const cloudinaryResult = await this.cloudinaryService.uploadFile(
         file.buffer,
@@ -42,7 +42,7 @@ export class DocumentsService {
           type: 'private', // Ensure it's private
         }
       );
-      
+
       // Call AI model API for classification
       let modelPrediction = null;
       let finalPrediction = null;
@@ -69,7 +69,7 @@ export class DocumentsService {
           textExcerpt = response.data.text_excerpt || null;
           documentEmbedding = response.data.document_embedding || null;
           extractedInfo = response.data.extracted_info || null;
-          
+
           // Map finalPrediction to DocumentType if valid
           if (finalPrediction && Object.values(DocumentType).includes(finalPrediction)) {
             detectedType = finalPrediction as DocumentType;
@@ -85,6 +85,21 @@ export class DocumentsService {
         console.error('Error calling AI model API:', err.message);
       }
       // Create document entity
+      console.log('📝 Creating document entity...');
+      console.log('- File info:', {
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size
+      });
+      console.log('- AI results:', {
+        modelPrediction,
+        finalPrediction,
+        modelConfidence,
+        textExcerptLength: textExcerpt?.length || 0,
+        embeddingLength: documentEmbedding?.length || 0,
+        extractedInfo
+      });
+
       const document = this.documentsRepository.create({
         ...createDocumentDto,
         uploadedBy: user,
@@ -105,18 +120,27 @@ export class DocumentsService {
         finalPrediction,
         modelConfidence,
         textExcerpt,
-        embedding: documentEmbedding, // Save the embedding to database
+        embedding: null, // Temporarily disable embedding save to debug hanging issue
         extractedInfo, // Save extracted information
         type: detectedType,
         // Remove aiRawResponse from entity, but log it for debugging
       });
+
+      console.log('✅ Document entity created successfully');
       if (aiRawResponse) {
-        console.error('AI Model API RAW RESPONSE:', aiRawResponse);
+        console.log('✅ AI Model API processing completed successfully');
       }
-      
-      const savedDocument = await this.documentsRepository.save(document);
-      
-      return savedDocument;
+
+      console.log('💾 Attempting to save document to database...');
+
+      try {
+        const savedDocument = await this.documentsRepository.save(document);
+        console.log('✅ Document saved successfully with ID:', savedDocument.id);
+        return savedDocument;
+      } catch (saveError) {
+        console.error('❌ Error saving document to database:', saveError);
+        throw saveError;
+      }
     } catch (error) {
       console.error('Error creating document:', error);
       throw error;
@@ -125,10 +149,10 @@ export class DocumentsService {
 
   async findAll(user: User, paginationDto?: PaginationDto): Promise<PaginatedResult<Document>> {
     const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto || {};
-    
+
     // Calculate offset
     const offset = (page - 1) * limit;
-    
+
     // Build the query
     const queryBuilder = this.documentsRepository
       .createQueryBuilder('document')
@@ -139,26 +163,26 @@ export class DocumentsService {
         { isPublic: true }, // Public documents
       ])
       .orWhere('sharedUser.id = :userId', { userId: user.id }); // Documents shared with the user
-    
+
     // Add sorting
     const validSortFields = ['createdAt', 'updatedAt', 'originalName', 'size', 'type'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
     queryBuilder.orderBy(`document.${sortField}`, sortOrder);
-    
+
     // Get total count for pagination
     const total = await queryBuilder.getCount();
-    
+
     // Apply pagination
     const documents = await queryBuilder
       .skip(offset)
       .take(limit)
       .getMany();
-    
+
     // Calculate pagination info
     const totalPages = Math.ceil(total / limit);
     const hasNext = page < totalPages;
     const hasPrev = page > 1;
-    
+
     return {
       data: documents,
       pagination: {
@@ -277,12 +301,12 @@ export class DocumentsService {
 
   async remove(id: string, user: User): Promise<void> {
     const document = await this.findOne(id, user);
-    
+
     // Only the document owner can delete it
     if (document.uploadedBy.id !== user.id) {
       throw new ForbiddenException(`Only the document owner can delete it`);
     }
-    
+
     // Delete from Cloudinary if it exists there
     if (document.cloudinaryPublicId) {
       try {
@@ -291,28 +315,28 @@ export class DocumentsService {
         console.error(`Error deleting file from Cloudinary: ${error.message}`);
       }
     }
-    
+
     await this.documentsRepository.remove(document);
   }
-  
+
   async searchSimilarDocuments(query: string, user: User, paginationDto?: PaginationDto): Promise<PaginatedResult<Document>> {
     try {
       const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto || {};
       const offset = (page - 1) * limit;
-      
+
       // Create a query builder to search for documents
       const queryBuilder = this.documentsRepository
         .createQueryBuilder('document')
         .leftJoinAndSelect('document.uploadedBy', 'uploader')
         .leftJoinAndSelect('document.sharedWith', 'sharedUser')
         .where([
-          { 
+          {
             uploadedBy: { id: user.id },
-            originalName: Like(`%${query}%`) 
+            originalName: Like(`%${query}%`)
           },
-          { 
+          {
             uploadedBy: { id: user.id },
-            description: Like(`%${query}%`) 
+            description: Like(`%${query}%`)
           },
           {
             isPublic: true,
@@ -320,31 +344,31 @@ export class DocumentsService {
           },
           {
             isPublic: true,
-            description: Like(`%${query}%`) 
+            description: Like(`%${query}%`)
           }
         ])
-        .orWhere('sharedUser.id = :userId AND (document.originalName LIKE :query OR document.description LIKE :query)', 
+        .orWhere('sharedUser.id = :userId AND (document.originalName LIKE :query OR document.description LIKE :query)',
           { userId: user.id, query: `%${query}%` });
-      
+
       // Add sorting
       const validSortFields = ['createdAt', 'updatedAt', 'originalName', 'size', 'type'];
       const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
       queryBuilder.orderBy(`document.${sortField}`, sortOrder);
-      
+
       // Get total count
       const total = await queryBuilder.getCount();
-      
+
       // Apply pagination
       const documents = await queryBuilder
         .skip(offset)
         .take(limit)
         .getMany();
-      
+
       // Calculate pagination info
       const totalPages = Math.ceil(total / limit);
       const hasNext = page < totalPages;
       const hasPrev = page > 1;
-      
+
       return {
         data: documents,
         pagination: {
@@ -382,19 +406,19 @@ export class DocumentsService {
     try {
       const { page = 1, limit = 10, sortBy = 'createdAt', sortOrder = 'DESC' } = paginationDto || {};
       const offset = (page - 1) * limit;
-      
+
       // Build the base query
       const queryBuilder = this.documentsRepository
         .createQueryBuilder('document')
         .leftJoinAndSelect('document.uploadedBy', 'uploader')
         .leftJoinAndSelect('document.sharedWith', 'sharedUser');
-      
+
       // Apply user access filters
       queryBuilder.where([
         { uploadedBy: { id: user.id } },
         { isPublic: true }
       ]).orWhere('sharedUser.id = :userId', { userId: user.id });
-      
+
       // Apply search filters
       if (searchDto.query) {
         queryBuilder.andWhere(
@@ -402,21 +426,21 @@ export class DocumentsService {
           { query: `%${searchDto.query}%` }
         );
       }
-      
+
       if (searchDto.clientName) {
         queryBuilder.andWhere(
           "document.extractedInfo->>'client_name' ILIKE :clientName",
           { clientName: `%${searchDto.clientName}%` }
         );
       }
-      
+
       if (searchDto.exactDate) {
         queryBuilder.andWhere(
           'document."extractedInfo"->>\'date\' = :exactDate',
           { exactDate: searchDto.exactDate }
         );
       }
-      
+
       if (searchDto.dateFrom && searchDto.dateTo) {
         queryBuilder.andWhere(
           "document.extractedInfo->>'date' BETWEEN :dateFrom AND :dateTo",
@@ -433,50 +457,50 @@ export class DocumentsService {
           { dateTo: searchDto.dateTo }
         );
       }
-      
+
       if (searchDto.documentType) {
         queryBuilder.andWhere('document.type = :documentType', { documentType: searchDto.documentType });
       }
-      
+
       if (searchDto.filename) {
         queryBuilder.andWhere('document.originalName ILIKE :filename', { filename: `%${searchDto.filename}%` });
       }
-      
+
       if (searchDto.description) {
         queryBuilder.andWhere('document.description ILIKE :description', { description: `%${searchDto.description}%` });
       }
-      
+
       if (searchDto.minSize) {
         queryBuilder.andWhere('document.size >= :minSize', { minSize: searchDto.minSize });
       }
-      
+
       if (searchDto.maxSize) {
         queryBuilder.andWhere('document.size <= :maxSize', { maxSize: searchDto.maxSize });
       }
-      
+
       if (searchDto.mimeType) {
         queryBuilder.andWhere('document.mimeType = :mimeType', { mimeType: searchDto.mimeType });
       }
-      
+
       // Add sorting
       const validSortFields = ['createdAt', 'updatedAt', 'originalName', 'size', 'type'];
       const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
       queryBuilder.orderBy(`document.${sortField}`, sortOrder);
-      
+
       // Get total count
       const total = await queryBuilder.getCount();
-      
+
       // Apply pagination
       const documents = await queryBuilder
         .skip(offset)
         .take(limit)
         .getMany();
-      
+
       // Calculate pagination info
       const totalPages = Math.ceil(total / limit);
       const hasNext = page < totalPages;
       const hasPrev = page > 1;
-      
+
       return {
         data: documents,
         pagination: {
@@ -503,13 +527,13 @@ export class DocumentsService {
       };
     }
   }
-  
+
   // Gets the download URL for a document with a secure signed URL
   getDocumentUrl(document: Document): string {
     if (!document.cloudinaryPublicId) {
       return null;
     }
-    
+
     // Generate a signed URL with 1-hour expiration
     return this.cloudinaryService.getSignedUrl(
       document.cloudinaryPublicId,
@@ -517,13 +541,13 @@ export class DocumentsService {
       { resource_type: document.cloudinaryMetadata?.resource_type || 'auto' }
     );
   }
-  
+
   // Generate a temporary signed URL for viewing a document
   getTemporaryViewUrl(document: Document, expirySeconds: number = 3600): string {
     if (!document.cloudinaryPublicId) {
       return null;
     }
-    
+
     // Generate a signed URL with specified expiration
     return this.cloudinaryService.getSignedUrl(
       document.cloudinaryPublicId,
@@ -535,12 +559,12 @@ export class DocumentsService {
   // Get list of users who have access to the document
   async getDocumentSharedUsers(id: string, user: User): Promise<User[]> {
     const document = await this.findOne(id, user);
-    
+
     // Only the document owner can see shared users
     if (document.uploadedBy.id !== user.id) {
       throw new ForbiddenException(`Only the document owner can view shared users`);
     }
-    
+
     return document.sharedWith || [];
   }
 
@@ -548,10 +572,10 @@ export class DocumentsService {
     try {
       const { page = 1, limit = 10, sortBy = 'similarity', sortOrder = 'DESC' } = paginationDto || {};
       const { query, similarityThreshold = 0.1, maxResults = 50 } = searchDto;
-      
+
       // Generate embedding for the search query
       const queryEmbedding = await this.embeddingService.generateQueryEmbedding(query);
-      
+
       if (!queryEmbedding) {
         console.log('⚠️ No embedding generated, returning empty results');
         return {
@@ -615,7 +639,7 @@ export class DocumentsService {
 
       // Add vector similarity calculation and filtering
       const vectorString = this.embeddingService.arrayToVector(queryEmbedding);
-      
+
       queryBuilder
         .addSelect(`1 - (document.embedding <=> '${vectorString}'::vector)`, 'similarity')
         .andWhere(`1 - (document.embedding <=> '${vectorString}'::vector) >= :threshold`, { threshold: similarityThreshold })
@@ -626,7 +650,7 @@ export class DocumentsService {
 
       // Get results with similarity scores
       const rawResults = await queryBuilder.getRawAndEntities();
-      
+
       // Process results to include similarity scores
       const resultsWithSimilarity: SemanticSearchResult[] = rawResults.entities.map((document, index) => ({
         document,
@@ -676,19 +700,19 @@ export class DocumentsService {
     try {
       // First, get semantic search results
       const semanticResults = await this.semanticSearch(searchDto, user, { ...paginationDto, limit: 100 });
-      
+
       // Then apply additional text-based filtering if needed
       let filteredResults = semanticResults.data;
-      
+
       // You can add additional text-based filtering here if needed
       // For example, boost results that also match text search
-      
+
       // Apply final pagination
       const { page = 1, limit = 10 } = paginationDto || {};
       const offset = (page - 1) * limit;
       const total = filteredResults.length;
       const paginatedResults = filteredResults.slice(offset, offset + limit);
-      
+
       const totalPages = Math.ceil(total / limit);
       const hasNext = page < totalPages;
       const hasPrev = page > 1;
@@ -725,7 +749,7 @@ export class DocumentsService {
     try {
       const { page = 1, limit = 10 } = paginationDto || {};
       const { clientName, year, query } = searchDto;
-      
+
       // Build the base query with user access filters
       const queryBuilder = this.documentsRepository
         .createQueryBuilder('document')
@@ -757,10 +781,10 @@ export class DocumentsService {
       // If we have a text query, use embedding similarity
       if (query) {
         const queryEmbedding = await this.embeddingService.generateQueryEmbedding(query);
-        
+
         if (queryEmbedding && this.embeddingService.validateEmbedding(queryEmbedding)) {
           const vectorString = this.embeddingService.arrayToVector(queryEmbedding);
-          
+
           queryBuilder
             .addSelect(`1 - (document.embedding <=> '${vectorString}'::vector)`, 'similarity')
             .orderBy('similarity', 'DESC');
@@ -775,7 +799,7 @@ export class DocumentsService {
 
       // Get total count
       const total = await queryBuilder.getCount();
-      
+
       // Apply pagination
       const offset = (page - 1) * limit;
       const documents = await queryBuilder
@@ -787,9 +811,9 @@ export class DocumentsService {
       const resultsWithDetails: SmartSearchResult[] = documents.entities.map((document, index) => {
         let matchType: 'client_name' | 'year' | 'text' | 'multiple' = 'text';
         let matchDetails = '';
-        
+
         const matchCount = [clientName, year, query].filter(Boolean).length;
-        
+
         if (matchCount > 1) {
           matchType = 'multiple';
           matchDetails = `Matched: ${[
@@ -850,12 +874,149 @@ export class DocumentsService {
     }
   }
 
+  async generateBilanReport(documentIds: string[], user: User, periodDays: number = 90): Promise<any> {
+    try {
+      // Fetch documents that the user has access to
+      const documents = await this.documentsRepository
+        .createQueryBuilder('document')
+        .leftJoinAndSelect('document.uploadedBy', 'uploader')
+        .leftJoinAndSelect('document.sharedWith', 'sharedUser')
+        .where('document.id IN (:...documentIds)', { documentIds })
+        .andWhere([
+          { uploadedBy: { id: user.id } },
+          { isPublic: true }
+        ])
+        .orWhere('sharedUser.id = :userId AND document.id IN (:...documentIds)', {
+          userId: user.id,
+          documentIds
+        })
+        .getMany();
+
+      if (documents.length === 0) {
+        throw new Error('No accessible documents found with the provided IDs');
+      }
+
+      console.log(`📊 Found ${documents.length} accessible documents out of ${documentIds.length} requested`);
+
+      // Log which documents were found vs requested
+      const foundIds = documents.map(d => d.id);
+      const missingIds = documentIds.filter(id => !foundIds.includes(id));
+      if (missingIds.length > 0) {
+        console.warn(`⚠️ Missing documents: ${missingIds.join(', ')}`);
+      }
+
+      // Validate that we have some financial documents
+      const financialTypes = ['invoice', 'receipt', 'purchase_order', 'bank_statement', 'payslip', 'expense_report'];
+      const hasFinancialDocs = documents.some(doc => financialTypes.includes(doc.type));
+
+      if (!hasFinancialDocs) {
+        console.warn('⚠️ No financial documents found in selection, bilan may be incomplete');
+      }
+
+      // Transform documents to the format expected by the external API
+      const documentsData = documents.map(doc => {
+        let extractedInfo: any = {};
+
+        // Parse extracted_info properly
+        if (doc.extractedInfo) {
+          if (typeof doc.extractedInfo === 'string') {
+            try {
+              extractedInfo = JSON.parse(doc.extractedInfo);
+            } catch (e) {
+              console.warn(`Failed to parse extractedInfo for document ${doc.id}:`, e);
+              extractedInfo = {};
+            }
+          } else {
+            extractedInfo = doc.extractedInfo;
+          }
+        }
+
+        // Ensure we have the minimum required fields for bilan generation
+        const processedExtractedInfo = {
+          date: extractedInfo.date || new Date(doc.createdAt).toISOString().split('T')[0],
+          client_name: extractedInfo.client_name || 'Unknown Client',
+          amount: extractedInfo.amount || 0,
+          currency: extractedInfo.currency || 'TND',
+          ...extractedInfo // Keep any additional fields
+        };
+
+        const transformedDoc = {
+          id: doc.id,
+          filename: doc.originalName,
+          document_type: doc.type,
+          confidence: doc.modelConfidence || 0.95,
+          extracted_text: doc.textExcerpt || '',
+          extracted_info: JSON.stringify(processedExtractedInfo), // External API expects string format
+          created_at: doc.createdAt.toISOString()
+        };
+
+        console.log(`🔍 Transformed document ${doc.id}:`, {
+          ...transformedDoc,
+          extracted_info: processedExtractedInfo // Log as object for readability
+        });
+
+        return transformedDoc;
+      });
+
+      console.log(`📊 Generating bilan for ${documents.length} documents for user ${user.id}`);
+      console.log('Document types:', documents.map(d => d.type).join(', '));
+
+      // Debug: Log the raw document data from database
+      console.log('📋 Raw document data from DB:');
+      documents.forEach(doc => {
+        console.log(`- Document ${doc.id}:`);
+        console.log(`  - originalName: ${doc.originalName}`);
+        console.log(`  - type: ${doc.type}`);
+        console.log(`  - textExcerpt: ${doc.textExcerpt?.substring(0, 100)}...`);
+        console.log(`  - extractedInfo (raw):`, doc.extractedInfo);
+        console.log(`  - extractedInfo type:`, typeof doc.extractedInfo);
+      });
+
+      // Prepare the payload for the external API
+      const payload = {
+        documents: documentsData,
+        period_days: periodDays
+      };
+
+      console.log('🔄 Sending bilan request to external API:');
+      console.log('📤 Payload:', JSON.stringify(payload, null, 2));
+
+      // Call the external bilan API
+      const response = await axios.post('http://127.0.0.1:8000/bilan', payload, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 30000, // 30 seconds timeout
+      });
+
+      console.log('✅ Bilan API response received:', response.status);
+
+      return response.data;
+    } catch (error) {
+      console.error('❌ Error generating bilan report:', error);
+
+      if (error.response) {
+        // The request was made and the server responded with a status code
+        console.error('API Error Response:', error.response.data);
+        throw new Error(`External API error: ${error.response.status} - ${JSON.stringify(error.response.data)}`);
+      } else if (error.request) {
+        // The request was made but no response was received
+        console.error('No response from API:', error.request);
+        throw new Error('No response from bilan API service');
+      } else {
+        // Something happened in setting up the request
+        console.error('Request setup error:', error.message);
+        throw new Error(`Request error: ${error.message}`);
+      }
+    }
+  }
+
   // Simple semantic search: Uses embeddings to search by client name or date
   async simpleSemanticSearch(searchDto: SimpleSearchDto, user: User, paginationDto?: PaginationDto): Promise<PaginatedResult<SemanticSearchResult>> {
     try {
       const { page = 1, limit = 10 } = paginationDto || {};
       const { clientName, date, similarityThreshold = 0.3, exactClientMatch = false } = searchDto;
-      
+
       // Build search query from client name and/or date
       let searchQuery = '';
       if (clientName && date) {
@@ -882,7 +1043,7 @@ export class DocumentsService {
 
       // Generate embedding for the search query
       const queryEmbedding = await this.embeddingService.generateQueryEmbedding(searchQuery);
-      
+
       if (!queryEmbedding) {
         console.log('⚠️ No embedding generated');
         return {
@@ -922,7 +1083,7 @@ export class DocumentsService {
       // Add date filter if provided (supports full date or year only)
       if (date) {
         const cleanDate = date.trim();
-        
+
         // If the search date is 4 digits (year only), filter by year
         if (/^\d{4}$/.test(cleanDate)) {
           queryBuilder.andWhere(
@@ -945,7 +1106,7 @@ export class DocumentsService {
 
       // Add vector similarity calculation and filtering
       const vectorString = this.embeddingService.arrayToVector(queryEmbedding);
-      
+
       queryBuilder
         .addSelect(`1 - (document.embedding <=> '${vectorString}'::vector)`, 'similarity')
         .andWhere(`1 - (document.embedding <=> '${vectorString}'::vector) >= :threshold`, { threshold: similarityThreshold })
@@ -954,7 +1115,7 @@ export class DocumentsService {
 
       // Get results with similarity scores
       const rawResults = await queryBuilder.getRawAndEntities();
-      
+
       // Process results to include similarity scores
       let resultsWithSimilarity: SemanticSearchResult[] = rawResults.entities.map((document, index) => ({
         document,
@@ -968,18 +1129,18 @@ export class DocumentsService {
         resultsWithSimilarity = resultsWithSimilarity.filter(result => {
           let clientMatch = true;
           let dateMatch = true;
-          
+
           // Check exact client name match if provided
           if (clientName) {
             const cleanClientName = clientName.trim();
             clientMatch = result.document.extractedInfo?.client_name === cleanClientName;
           }
-          
+
           // Check date match if provided (supports full date or year only)
           if (date) {
             const cleanDate = date.trim();
             const documentDate = result.document.extractedInfo?.date;
-            
+
             if (documentDate) {
               // If the search date is 4 digits (year only), extract year from document date
               if (/^\d{4}$/.test(cleanDate)) {
@@ -993,11 +1154,11 @@ export class DocumentsService {
               dateMatch = false;
             }
           }
-          
+
           // Both conditions must be true (if provided)
           return clientMatch && dateMatch;
         });
-        
+
         // Re-rank after filtering
         resultsWithSimilarity = resultsWithSimilarity.map((result, index) => ({
           ...result,
@@ -1019,7 +1180,7 @@ export class DocumentsService {
       if (clientName) filterDetails.push('exact client match');
       if (date) filterDetails.push('exact date match');
       const filterText = filterDetails.length > 0 ? ` with ${filterDetails.join(' and ')}` : '';
-      
+
       console.log(`✅ Found ${total} results with similarity >= ${similarityThreshold}${filterText}`);
 
       return {
