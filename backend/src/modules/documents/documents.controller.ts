@@ -8,6 +8,7 @@ import { AdvancedSearchDto } from './dto/advanced-search.dto';
 import { SemanticSearchDto } from './dto/semantic-search.dto';
 import { SmartSearchDto } from './dto/smart-search.dto';
 import { SimpleSearchDto } from './dto/simple-search.dto';
+import { GenerateBilanDto } from './dto/generate-bilan.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Request, Response } from 'express';
 import { User } from '../users/entities/user.entity';
@@ -28,23 +29,38 @@ export class DocumentsController {
     @Body() createDocumentDto: CreateDocumentDto,
     @Req() req: Request & { user: User },
   ) {
-    // We now pass the file to the service which will handle uploading to Cloudinary
-    const document = await this.documentsService.create(
-      {
-        ...createDocumentDto,
-        type: createDocumentDto.type || DocumentType.OTHER,
-      }, 
-      req.user,
-      file
-    );
+    console.log('🚀 Upload endpoint called');
+    console.log('- File:', file?.originalname, file?.size, 'bytes');
+    console.log('- User:', req.user?.id);
+    console.log('- DTO:', createDocumentDto);
 
-    return {
-      ...document,
-      textExcerpt: document.textExcerpt,
-      modelPrediction: document.modelPrediction,
-      finalPrediction: document.finalPrediction,
-      modelConfidence: document.modelConfidence
-    };
+    try {
+      // We now pass the file to the service which will handle uploading to Cloudinary
+      console.log('📞 Calling documents service...');
+      const document = await this.documentsService.create(
+        {
+          ...createDocumentDto,
+          type: createDocumentDto.type || DocumentType.OTHER,
+        }, 
+        req.user,
+        file
+      );
+
+      console.log('✅ Document service completed, preparing response...');
+      const response = {
+        ...document,
+        textExcerpt: document.textExcerpt,
+        modelPrediction: document.modelPrediction,
+        finalPrediction: document.finalPrediction,
+        modelConfidence: document.modelConfidence
+      };
+
+      console.log('🎉 Returning response to client');
+      return response;
+    } catch (error) {
+      console.error('❌ Error in upload controller:', error);
+      throw error;
+    }
   }
 
   @Get()
@@ -510,6 +526,24 @@ export class DocumentsController {
       isOwner: document.uploadedBy.id === req.user.id,
       isPublic: document.isPublic
     };
+  }
+
+  @Post('generate-bilan')
+  async generateBilan(
+    @Body() generateBilanDto: GenerateBilanDto,
+    @Req() req: Request & { user: User }
+  ) {
+    try {
+      const bilanReport = await this.documentsService.generateBilanReport(
+        generateBilanDto.documentIds, 
+        req.user,
+        generateBilanDto.periodDays
+      );
+      return bilanReport;
+    } catch (error) {
+      console.error('Error generating bilan report:', error);
+      return { error: 'Failed to generate bilan report', details: error.message };
+    }
   }
 
   @Delete(':id')
