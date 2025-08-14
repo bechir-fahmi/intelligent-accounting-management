@@ -15,6 +15,7 @@ import AdminUsers from "./pages/AdminUsers";
 import ComptableClients from "./pages/ComptableClients";
 import Reporting from "./pages/Reporting";
 import ResetPassword from "./pages/ResetPassword";
+import BilanGeneration from "./pages/BilanGeneration";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +60,14 @@ const App: React.FC = () => {
               element={
                 <ProtectedRoute>
                   <Reporting />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/bilan"
+              element={
+                <ProtectedRoute>
+                  <BilanGeneration />
                 </ProtectedRoute>
               }
             />
