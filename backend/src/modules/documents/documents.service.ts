@@ -913,64 +913,31 @@ export class DocumentsService {
         console.warn('⚠️ No financial documents found in selection, bilan may be incomplete');
       }
 
-      // Transform documents to the format expected by the external API
+      // Transform documents to send only Cloudinary URLs to the external API
       const documentsData = documents.map(doc => {
-        let extractedInfo: any = {};
-
-        // Parse extracted_info properly
-        if (doc.extractedInfo) {
-          if (typeof doc.extractedInfo === 'string') {
-            try {
-              extractedInfo = JSON.parse(doc.extractedInfo);
-            } catch (e) {
-              console.warn(`Failed to parse extractedInfo for document ${doc.id}:`, e);
-              extractedInfo = {};
-            }
-          } else {
-            extractedInfo = doc.extractedInfo;
-          }
+        // Get the Cloudinary URL - use secure URL if available, otherwise regular URL
+        const cloudinaryUrl = doc.cloudinarySecureUrl || doc.cloudinaryUrl;
+        
+        if (!cloudinaryUrl) {
+          console.warn(`⚠️ Document ${doc.id} (${doc.originalName}) has no Cloudinary URL`);
         }
-
-        // Ensure we have the minimum required fields for bilan generation
-        const processedExtractedInfo = {
-          date: extractedInfo.date || new Date(doc.createdAt).toISOString().split('T')[0],
-          client_name: extractedInfo.client_name || 'Unknown Client',
-          amount: extractedInfo.amount || 0,
-          currency: extractedInfo.currency || 'TND',
-          ...extractedInfo // Keep any additional fields
-        };
 
         const transformedDoc = {
           id: doc.id,
           filename: doc.originalName,
           document_type: doc.type,
-          confidence: doc.modelConfidence || 0.95,
-          extracted_text: doc.textExcerpt || '',
-          extracted_info: JSON.stringify(processedExtractedInfo), // External API expects string format
+          cloudinaryUrl: cloudinaryUrl,
           created_at: doc.createdAt.toISOString()
         };
 
-        console.log(`🔍 Transformed document ${doc.id}:`, {
-          ...transformedDoc,
-          extracted_info: processedExtractedInfo // Log as object for readability
-        });
+        console.log(`🔍 Transformed document ${doc.id}:`, transformedDoc);
 
         return transformedDoc;
       });
 
       console.log(`📊 Generating bilan for ${documents.length} documents for user ${user.id}`);
       console.log('Document types:', documents.map(d => d.type).join(', '));
-
-      // Debug: Log the raw document data from database
-      console.log('📋 Raw document data from DB:');
-      documents.forEach(doc => {
-        console.log(`- Document ${doc.id}:`);
-        console.log(`  - originalName: ${doc.originalName}`);
-        console.log(`  - type: ${doc.type}`);
-        console.log(`  - textExcerpt: ${doc.textExcerpt?.substring(0, 100)}...`);
-        console.log(`  - extractedInfo (raw):`, doc.extractedInfo);
-        console.log(`  - extractedInfo type:`, typeof doc.extractedInfo);
-      });
+      console.log('Cloudinary URLs:', documents.map(d => d.cloudinarySecureUrl || d.cloudinaryUrl || 'NO_URL').join(', '));
 
       // Prepare the payload for the external API
       const payload = {
@@ -990,8 +957,70 @@ export class DocumentsService {
       });
 
       console.log('✅ Bilan API response received:', response.status);
-
-      return response.data;
+      console.log('📥 RAW EXTERNAL API RESPONSE:');
+      console.log('=====================================');
+      console.log(JSON.stringify(response.data, null, 2));
+      console.log('=====================================');
+      
+      // Log specific sections to analyze number formats
+      if (response.data.compte_de_resultat) {
+        console.log('💰 RAW Compte de Résultat values:');
+        console.log(`  - resultat_exploitation: ${response.data.compte_de_resultat.resultat_exploitation} (type: ${typeof response.data.compte_de_resultat.resultat_exploitation})`);
+        console.log(`  - resultat_avant_impot: ${response.data.compte_de_resultat.resultat_avant_impot} (type: ${typeof response.data.compte_de_resultat.resultat_avant_impot})`);
+        console.log(`  - resultat_net: ${response.data.compte_de_resultat.resultat_net} (type: ${typeof response.data.compte_de_resultat.resultat_net})`);
+      }
+      
+      if (response.data.bilan_comptable) {
+        console.log('🏦 RAW Bilan Comptable values:');
+        console.log(`  - total_actif: ${response.data.bilan_comptable.total_actif} (type: ${typeof response.data.bilan_comptable.total_actif})`);
+        console.log(`  - total_passif: ${response.data.bilan_comptable.total_passif} (type: ${typeof response.data.bilan_comptable.total_passif})`);
+      }
+      
+      if (response.data.details_transactions && Array.isArray(response.data.details_transactions)) {
+        console.log('📋 RAW Transaction amounts (first 3):');
+        response.data.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
+          console.log(`  - Transaction ${index + 1}: montant=${transaction.montant} (type: ${typeof transaction.montant}) - ${transaction.libelle}`);
+        });
+      }
+      
+      if (response.data.analyse_financiere) {
+        console.log('📊 RAW Financial Analysis:');
+        console.log('  - Points forts:', response.data.analyse_financiere.points_forts);
+        console.log('  - Points faibles:', response.data.analyse_financiere.points_faibles);
+        console.log('  - Recommandations:', response.data.analyse_financiere.recommandations);
+      }
+      
+      // Process the response to handle number formatting issues
+      const processedBilanData = this.processBilanNumbers(response.data);
+      
+      console.log('🔄 AFTER PROCESSING:');
+      console.log('=====================================');
+      
+      // Log the same sections after processing
+      if (processedBilanData.compte_de_resultat) {
+        console.log('💰 PROCESSED Compte de Résultat values:');
+        console.log(`  - resultat_exploitation: ${processedBilanData.compte_de_resultat.resultat_exploitation} (type: ${typeof processedBilanData.compte_de_resultat.resultat_exploitation})`);
+        console.log(`  - resultat_avant_impot: ${processedBilanData.compte_de_resultat.resultat_avant_impot} (type: ${typeof processedBilanData.compte_de_resultat.resultat_avant_impot})`);
+        console.log(`  - resultat_net: ${processedBilanData.compte_de_resultat.resultat_net} (type: ${typeof processedBilanData.compte_de_resultat.resultat_net})`);
+      }
+      
+      if (processedBilanData.details_transactions && Array.isArray(processedBilanData.details_transactions)) {
+        console.log('📋 PROCESSED Transaction amounts (first 3):');
+        processedBilanData.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
+          console.log(`  - Transaction ${index + 1}: montant=${transaction.montant} (type: ${typeof transaction.montant}) - ${transaction.libelle}`);
+        });
+      }
+      
+      if (processedBilanData.analyse_financiere) {
+        console.log('📊 PROCESSED Financial Analysis:');
+        console.log('  - Points forts:', processedBilanData.analyse_financiere.points_forts);
+        console.log('  - Points faibles:', processedBilanData.analyse_financiere.points_faibles);
+        console.log('  - Recommandations:', processedBilanData.analyse_financiere.recommandations);
+      }
+      
+      console.log('=====================================');
+      
+      return processedBilanData;
     } catch (error) {
       console.error('❌ Error generating bilan report:', error);
 
@@ -1009,6 +1038,143 @@ export class DocumentsService {
         throw new Error(`Request error: ${error.message}`);
       }
     }
+  }
+
+  /**
+   * Process bilan response to handle Tunisian currency formatting
+   * The external API returns amounts in millimes and uses European decimal notation (comma as decimal separator)
+   * Examples:
+   * - "7,735" = 7.735 dinars (7 dinars and 735 millimes)
+   * - 23365 = 23.365 dinars (23 dinars and 365 millimes)
+   * - "280,250" = 280.250 dinars
+   */
+  private processBilanNumbers(bilanData: any): any {
+    if (!bilanData || typeof bilanData !== 'object') {
+      return bilanData;
+    }
+
+    const processValue = (value: any, path: string = ''): any => {
+      // Handle string numbers with European decimal notation (comma as decimal separator)
+      if (typeof value === 'string') {
+        // Pattern for European decimal notation: "18,000" "231,109" "23,365" "51,94"
+        const europeanDecimalPattern = /^-?\d+,\d+$/;
+        if (europeanDecimalPattern.test(value)) {
+          // Replace comma with dot for proper decimal parsing
+          const numericValue = parseFloat(value.replace(',', '.'));
+          console.log(`🔢 [${path}] European decimal string: "${value}" → ${numericValue} dinars`);
+          return numericValue;
+        }
+        
+        // Pattern for regular numbers as strings: "1500" or "-500"
+        const numberPattern = /^-?\d+$/;
+        if (numberPattern.test(value)) {
+          const numericValue = parseFloat(value);
+          console.log(`🔢 [${path}] String integer: "${value}" → ${numericValue}`);
+          return numericValue;
+        }
+        
+        // Pattern for decimal numbers as strings: "7.735" or "-280.250"
+        const decimalPattern = /^-?\d+\.\d+$/;
+        if (decimalPattern.test(value)) {
+          const numericValue = parseFloat(value);
+          console.log(`🔢 [${path}] Decimal string: "${value}" → ${numericValue}`);
+          return numericValue;
+        }
+        
+        // For all other strings (like French text), keep as is
+        // Don't process strings that contain French words or are clearly text content
+        const isFrenchText = /[a-zA-ZÀ-ÿ\s]/.test(value) && value.length > 10;
+        if (isFrenchText || path.includes('analyse_financiere') || path.includes('libelle')) {
+          console.log(`📝 [${path}] Text content: "${value.substring(0, 50)}..." (keeping as is)`);
+        }
+        return value;
+      }
+      
+      // Handle numeric values
+      if (typeof value === 'number') {
+        // The external API is inconsistent:
+        // - Sometimes sends proper decimals: 161, 51.94
+        // - Sometimes sends integers that should be decimals: 18000 (should be 18.000), 231109 (should be 231.109)
+        
+        if (Number.isInteger(value)) {
+          // Analyze the context and value to determine if conversion is needed
+          
+          // Small whole numbers (< 1000) are likely already in dinars
+          if (Math.abs(value) < 1000) {
+            console.log(`🔢 [${path}] Small integer: ${value} (keeping as dinars)`);
+            return value;
+          }
+          
+          // For larger integers, we need to determine if they represent millimes
+          // Based on your examples:
+          // - 18000 should be 18.000 dinars
+          // - 231109 should be 231.109 dinars  
+          // - 23365 should be 23.365 dinars
+          
+          // Check if the number makes sense when divided by 1000
+          const potentialDinars = value / 1000;
+          
+          // If the result is a reasonable dinar amount (not too small), convert it
+          if (potentialDinars >= 1) {
+            console.log(`🔢 [${path}] Large integer: ${value} → ${potentialDinars} dinars (converted from millimes)`);
+            return potentialDinars;
+          } else {
+            // Very small amounts, keep as is
+            console.log(`🔢 [${path}] Small amount: ${value} (keeping as is)`);
+            return value;
+          }
+        } else {
+          // Already a decimal number, keep as is
+          console.log(`🔢 [${path}] Decimal number: ${value} (keeping as dinars)`);
+          return value;
+        }
+      }
+      
+      // If it's an object, recursively process it
+      if (typeof value === 'object' && value !== null) {
+        if (Array.isArray(value)) {
+          return value.map((item, index) => processValue(item, `${path}[${index}]`));
+        } else {
+          const processedObj: any = {};
+          for (const [key, val] of Object.entries(value)) {
+            const newPath = path ? `${path}.${key}` : key;
+            processedObj[key] = processValue(val, newPath);
+          }
+          return processedObj;
+        }
+      }
+      
+      // For all other types, return as is
+      return value;
+    };
+
+    console.log('🔄 Starting number processing...');
+    const processedData = processValue(bilanData, 'root');
+    
+    console.log('🔄 Processed bilan numbers - converted European decimal notation to standard decimals');
+    
+    // Log some key financial values to verify conversion
+    if (processedData.compte_de_resultat) {
+      console.log('💰 Key financial values after processing (in dinars):');
+      console.log(`  - Résultat d'exploitation: ${processedData.compte_de_resultat.resultat_exploitation} DT`);
+      console.log(`  - Résultat avant impôt: ${processedData.compte_de_resultat.resultat_avant_impot} DT`);
+      console.log(`  - Résultat net: ${processedData.compte_de_resultat.resultat_net} DT`);
+    }
+    
+    if (processedData.bilan_comptable) {
+      console.log(`  - Total actif: ${processedData.bilan_comptable.total_actif} DT`);
+      console.log(`  - Total passif: ${processedData.bilan_comptable.total_passif} DT`);
+    }
+
+    // Log transaction details to verify amounts
+    if (processedData.details_transactions && Array.isArray(processedData.details_transactions)) {
+      console.log('📋 Transaction amounts after processing:');
+      processedData.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
+        console.log(`  - Transaction ${index + 1}: ${transaction.montant} DT (${transaction.libelle})`);
+      });
+    }
+
+    return processedData;
   }
 
   // Simple semantic search: Uses embeddings to search by client name or date
