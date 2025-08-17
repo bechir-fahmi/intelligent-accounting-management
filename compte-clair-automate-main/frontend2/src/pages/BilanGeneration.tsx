@@ -1,3 +1,13 @@
+/**
+ * Bilan Generation Page
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Main page for generating comprehensive financial balance sheets (bilans comptables)
+ *              from selected documents using AI-powered analysis
+ * @created 2025
+ */
+
 import React, { useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";

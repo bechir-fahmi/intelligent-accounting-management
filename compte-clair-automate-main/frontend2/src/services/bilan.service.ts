@@ -1,3 +1,13 @@
+/**
+ * Bilan Service
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Business logic service for bilan generation, validation,
+ *              formatting, and utility functions
+ * @created 2025
+ */
+
 import api from '@/lib/axios';
 import { BilanGenerationRequest, BilanReport } from '@/types/bilan.types';
 

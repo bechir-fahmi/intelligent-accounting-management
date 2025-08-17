@@ -1,3 +1,13 @@
+/**
+ * Document Selector Component for Bilan Generation
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Advanced document selection interface with filtering, search,
+ *              and validation for bilan generation
+ * @created 2025
+ */
+
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

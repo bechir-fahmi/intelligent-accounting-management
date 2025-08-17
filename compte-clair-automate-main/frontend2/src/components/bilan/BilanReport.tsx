@@ -1,3 +1,13 @@
+/**
+ * Bilan Report Display Component
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Professional balance sheet and income statement display component
+ *              with financial ratios, analysis, and export capabilities
+ * @created 2025
+ */
+
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

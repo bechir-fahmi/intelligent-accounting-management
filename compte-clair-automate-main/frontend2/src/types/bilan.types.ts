@@ -1,3 +1,13 @@
+/**
+ * Bilan Generation TypeScript Type Definitions
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Complete type definitions for bilan generation feature
+ *              including balance sheet, income statement, and analysis types
+ * @created 2025
+ */
+
 // Bilan Generation Types
 export interface BilanConfig {
   periodDays: number;

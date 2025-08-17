@@ -1,3 +1,13 @@
+/**
+ * Bilan Configuration Component
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Configuration interface for bilan generation parameters
+ *              including period selection and document type filtering
+ * @created 2025
+ */
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

@@ -1,3 +1,13 @@
+/**
+ * Transaction Details Component
+ * 
+ * @author Bachir Fahmi <bachirfahmi5@gmail.com>
+ * @repository https://github.com/bechir-fahmi
+ * @description Detailed transaction breakdown table with sorting, filtering,
+ *              and export capabilities for bilan reports
+ * @created 2025
+ */
+
 import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
