@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import DocumentCard from "@/components/DocumentCard";
@@ -41,6 +42,7 @@ import {
 } from "@/utils/searchParser";
 
 const Documents = () => {
+  const { t } = useTranslation();
   const [documents, setDocuments] = useState<Document[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -91,7 +93,7 @@ const Documents = () => {
       }
     } catch (error) {
       console.error("Error loading documents:", error);
-      toast.error("Erreur lors du chargement des documents");
+      toast.error(t('documents.loadingError'));
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -115,9 +117,7 @@ const Documents = () => {
       const parsedSearch = parseSearchQuery(query);
 
       if (parsedSearch.searchType === "unknown") {
-        toast.error(
-          "Format de recherche non reconnu. Utilisez: nom client, année (ex: 2025), ou les deux."
-        );
+        toast.error(t('documents.searchError'));
         setLoading(false);
         return;
       }
@@ -185,7 +185,7 @@ const Documents = () => {
       }
     } catch (error) {
       console.error("Error in advanced search:", error);
-      toast.error("Erreur lors de la recherche avancée");
+      toast.error(t('documents.advancedSearchError'));
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -219,7 +219,7 @@ const Documents = () => {
       }
     } catch (error) {
       console.error("Error in semantic field search:", error);
-      toast.error("Erreur lors de la recherche sémantique");
+      toast.error(t('documents.semanticSearchError'));
       setDocuments([]);
     } finally {
       setLoading(false);
@@ -281,7 +281,7 @@ const Documents = () => {
       }
     } catch (error) {
       console.error("Error changing page:", error);
-      toast.error("Erreur lors du changement de page");
+      toast.error(t('documents.pageChangeError'));
     } finally {
       setLoading(false);
     }
@@ -312,9 +312,9 @@ const Documents = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8 flex justify-between items-center">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">Documents</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{t("documents.title")}</h1>
               <p className="text-gray-500">
-                Consultez et gérez vos documents comptables
+                {t("documents.description")}
               </p>
 
               {/* Feature Status */}
@@ -325,25 +325,21 @@ const Documents = () => {
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-green-800">
-                      Fonctionnalités disponibles
+                      {t('documents.featuresAvailable')}
                     </h3>
                     <ul className="mt-1 text-xs text-green-700 space-y-1">
                       <li>
-                        ✅ <strong>Recherche sémantique</strong> - Recherche
-                        dans les données extraites par IA (client_name, date)
+                        ✅ <strong>{t('documents.semanticSearchFeature')}</strong>
                       </li>
                       <li>
-                        ✅ <strong>Recherche textuelle</strong> - Recherche par
-                        mots-clés dans les documents
+                        ✅ <strong>{t('documents.textSearchFeature')}</strong>
                       </li>
                       <li>
-                        ✅ <strong>Pagination</strong> - Navigation efficace
-                        dans les résultats
+                        ✅ <strong>{t('documents.paginationFeature')}</strong>
                       </li>
                     </ul>
                     <p className="mt-2 text-xs text-blue-600">
-                      🚀 <strong>Bientôt :</strong> Recherche sémantique
-                      complète, recherche hybride, et filtres avancés
+                      🚀 <strong>{t('documents.comingSoon')}</strong>
                     </p>
                   </div>
                 </div>
@@ -357,29 +353,28 @@ const Documents = () => {
               <Search className="h-4 w-4 text-purple-600 mt-0.5" />
               <div className="flex-1">
                 <span className="text-sm font-medium text-purple-800">
-                  🧠 Recherche sémantique intelligente
+                  🧠 {t('documents.intelligentSearch')}
                 </span>
                 <div className="text-xs text-purple-600 mt-2 space-y-1">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                     <div className="bg-white p-2 rounded border">
-                      <strong>Par client :</strong>
+                      <strong>{t('documents.byClient')}</strong>
                       <br />
                       <code className="text-xs">M. BACHIR FAHMI</code>
                     </div>
                     <div className="bg-white p-2 rounded border">
-                      <strong>Par année :</strong>
+                      <strong>{t('documents.byYear')}</strong>
                       <br />
                       <code className="text-xs">2025</code>
                     </div>
                     <div className="bg-white p-2 rounded border">
-                      <strong>Combiné :</strong>
+                      <strong>{t('documents.combined')}</strong>
                       <br />
                       <code className="text-xs">M. BACHIR FAHMI 2025</code>
                     </div>
                   </div>
                   <p className="mt-2 text-xs">
-                    <strong>Format année :</strong> 4 chiffres (ex: 2025, 2024,
-                    2023...)
+                    <strong>{t('documents.yearFormat')}</strong>
                   </p>
                 </div>
               </div>
@@ -394,7 +389,7 @@ const Documents = () => {
               </div>
               <Input
                 type="text"
-                placeholder="Ex: M. BACHIR FAHMI, 2025, ou M. BACHIR FAHMI 2025"
+                placeholder={t('documents.searchPlaceholder')}
                 className="pl-10"
                 value={searchQuery}
                 onChange={(e) => handleQuickSearch(e.target.value)}
@@ -419,7 +414,7 @@ const Documents = () => {
           {(searchQuery || isAdvancedSearch) && (
             <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center space-x-2">
-                <Badge variant="secondary">Recherche sémantique active</Badge>
+                <Badge variant="secondary">{t('documents.semanticSearchActive')}</Badge>
                 {searchQuery && (
                   <div className="text-sm text-gray-600">
                     {(() => {
@@ -430,7 +425,7 @@ const Documents = () => {
                 )}
               </div>
               <Button variant="outline" size="sm" onClick={handleClearSearch}>
-                Effacer la recherche
+                {t('documents.clearSearch')}
               </Button>
             </div>
           )}
@@ -442,19 +437,19 @@ const Documents = () => {
                 variant={activeFilter === "tous" ? "default" : "outline"}
                 onClick={() => setActiveFilter("tous")}
               >
-                Tous
+                {t('documents.all')}
               </Button>
               <Button
                 variant={activeFilter === "factures" ? "default" : "outline"}
                 onClick={() => setActiveFilter("factures")}
               >
-                Factures
+                {t('documents.invoices')}
               </Button>
               <Button
                 variant={activeFilter === "devis" ? "default" : "outline"}
                 onClick={() => setActiveFilter("devis")}
               >
-                Devis
+                {t('documents.quotes')}
               </Button>
               <Button
                 variant={
@@ -462,12 +457,12 @@ const Documents = () => {
                 }
                 onClick={() => setActiveFilter("bons_commande")}
               >
-                Bons de commande
+                {t('documents.purchaseOrders')}
               </Button>
             </div>
 
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Afficher:</span>
+              <span className="text-sm text-gray-600">{t('documents.show')}</span>
               <Select
                 value={itemsPerPage.toString()}
                 onValueChange={handleItemsPerPageChange}
@@ -483,7 +478,7 @@ const Documents = () => {
                   <SelectItem value="24">24</SelectItem>
                 </SelectContent>
               </Select>
-              <span className="text-sm text-gray-600">par page</span>
+              <span className="text-sm text-gray-600">{t('documents.perPage')}</span>
             </div>
           </div>
 
@@ -491,12 +486,12 @@ const Documents = () => {
           {!loading && filteredDocuments.length > 0 && (
             <div className="mb-4 flex justify-between items-center text-sm text-gray-600">
               <span>
-                Affichage de {(pagination.page - 1) * pagination.limit + 1} à{" "}
+                {t('documents.displaying')} {(pagination.page - 1) * pagination.limit + 1} {t('documents.to')}{" "}
                 {Math.min(pagination.page * pagination.limit, pagination.total)}{" "}
-                sur {pagination.total} documents
+                {t('documents.on')} {pagination.total} {t('documents.documentsCount')}
               </span>
               <span>
-                Page {pagination.page} sur {pagination.totalPages}
+                {t('documents.page')} {pagination.page} {t('documents.of')} {pagination.totalPages}
               </span>
             </div>
           )}
@@ -630,13 +625,13 @@ const Documents = () => {
                 />
               </svg>
               <h3 className="text-lg font-medium text-gray-900 mb-1">
-                Aucun document trouvé
+                {t('documents.noDocumentsFound')}
               </h3>
               <p className="text-gray-500 mb-4">
-                Il n'y a pas de documents correspondant à votre recherche.
+                {t('documents.noDocumentsDescription')}
               </p>
               <Button variant="outline" onClick={() => setActiveFilter("tous")}>
-                Voir tous les documents
+                {t('documents.viewAllDocuments')}
               </Button>
             </Card>
           )}

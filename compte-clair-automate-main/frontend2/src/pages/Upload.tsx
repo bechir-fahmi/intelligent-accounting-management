@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { toast } from 'react-hot-toast';
 import { documentsService, Document, DocumentType } from '@/services/documents.service';
 import UploadZone from '@/components/UploadZone';
@@ -9,6 +10,7 @@ import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 const Upload = () => {
+  const { t } = useTranslation();
   const [uploading, setUploading] = useState(false);
   const [uploadedDocument, setUploadedDocument] = useState<Document | null>(null);
   const navigate = useNavigate();
@@ -30,10 +32,10 @@ const Upload = () => {
       });
       
       setUploadedDocument(document);
-      toast.success('Document téléchargé avec succès');
+      toast.success(t('pages.upload.uploadSuccess'));
     } catch (error) {
       console.error('Error uploading document:', error);
-      toast.error('Erreur lors du téléchargement du document');
+      toast.error(t('pages.upload.uploadError'));
     } finally {
       setUploading(false);
     }
@@ -52,8 +54,8 @@ const Upload = () => {
       <main className="flex-grow pt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="mb-8">
-            <h1 className="text-2xl font-bold text-gray-900">Import de documents</h1>
-            <p className="text-gray-500">Téléchargez vos documents pour une analyse automatique</p>
+            <h1 className="text-2xl font-bold text-gray-900">{t('pages.upload.title')}</h1>
+            <p className="text-gray-500">{t('pages.upload.description')}</p>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
@@ -65,19 +67,19 @@ const Upload = () => {
                 {uploading && (
                   <div className="mt-4 flex items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <span className="ml-2 text-gray-600">Analyse en cours...</span>
+                    <span className="ml-2 text-gray-600">{t('pages.upload.analysisInProgress')}</span>
                 </div>
                 )}
               </Card>
 
               <div className="mt-6">
-                <h2 className="text-lg font-semibold mb-4">Types de documents acceptés</h2>
+                <h2 className="text-lg font-semibold mb-4">{t('pages.upload.acceptedDocuments')}</h2>
                 <ul className="space-y-2 text-gray-600">
-                  <li>• Factures</li>
-                  <li>• Devis</li>
-                  <li>• Bons de commande</li>
-                  <li>• Relevés bancaires</li>
-                  <li>• Documents fiscaux</li>
+                  <li>• {t('pages.upload.invoices')}</li>
+                  <li>• {t('pages.upload.quotes')}</li>
+                  <li>• {t('pages.upload.purchaseOrders')}</li>
+                  <li>• {t('pages.upload.bankStatements')}</li>
+                  <li>• {t('pages.upload.taxDocuments')}</li>
                 </ul>
               </div>
             </div>
@@ -86,37 +88,37 @@ const Upload = () => {
             <div>
               {uploadedDocument && (
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">Résultats de l'analyse</h2>
+                  <h2 className="text-lg font-semibold mb-4">{t('pages.upload.analysisResults')}</h2>
                   
                   <div className="space-y-4">
                     <div>
-                      <span className="text-gray-500">Nom du document : </span>
+                      <span className="text-gray-500">{t('pages.upload.documentName')} </span>
                       <span className="font-medium">{uploadedDocument.originalName}</span>
                 </div>
 
                     {uploadedDocument.modelPrediction && (
                       <div>
-                        <span className="text-gray-500">Prédiction du modèle : </span>
+                        <span className="text-gray-500">{t('pages.upload.modelPrediction')} </span>
                         <span className="font-medium">{uploadedDocument.modelPrediction}</span>
                   </div>
                     )}
 
                     {uploadedDocument.finalPrediction && (
                       <div>
-                        <span className="text-gray-500">Prédiction finale : </span>
+                        <span className="text-gray-500">{t('pages.upload.finalPrediction')} </span>
                         <span className="font-medium">{uploadedDocument.finalPrediction}</span>
                 </div>
                     )}
 
                     {uploadedDocument.textExcerpt && (
                       <div>
-                        <span className="text-gray-500">Extrait du texte : </span>
+                        <span className="text-gray-500">{t('pages.upload.textExcerpt')} </span>
                         <p className="mt-1 bg-gray-50 p-3 rounded text-gray-700">{uploadedDocument.textExcerpt}</p>
               </div>
                     )}
 
                     <div>
-                      <span className="text-gray-500">Niveau de confiance : </span>
+                      <span className="text-gray-500">{t('pages.upload.confidenceLevel')} </span>
                       <span className="font-medium">{formatConfidence(uploadedDocument.modelConfidence || 0)}%</span>
             </div>
             
@@ -125,7 +127,7 @@ const Upload = () => {
                         onClick={() => navigate('/documents')}
                         className="w-full"
                       >
-                        Voir dans Documents
+                        {t('pages.upload.viewInDocuments')}
                 </Button>
               </div>
                   </div>
@@ -134,11 +136,9 @@ const Upload = () => {
 
               {!uploadedDocument && (
                 <Card className="p-6">
-                  <h2 className="text-lg font-semibold mb-4">Comment ça marche ?</h2>
+                  <h2 className="text-lg font-semibold mb-4">{t('pages.upload.howItWorks')}</h2>
                   <p className="text-gray-600">
-                    Notre système analyse automatiquement vos documents grâce à l'intelligence artificielle.
-                    Il détecte le type de document, extrait les informations importantes et vous présente
-                    les résultats en temps réel.
+                    {t('pages.upload.howItWorksDesc')}
                   </p>
                 </Card>
               )}

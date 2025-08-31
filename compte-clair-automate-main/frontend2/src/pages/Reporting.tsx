@@ -1,10 +1,13 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart3, FileText, TrendingUp, Calendar } from 'lucide-react';
 
 const Reporting = () => {
+  const { t } = useTranslation();
+  
   return (
     <div className="flex flex-col min-h-screen">
       <Navbar />
@@ -14,9 +17,9 @@ const Reporting = () => {
           <div className="mb-8">
             <h1 className="text-2xl font-bold text-gray-900 flex items-center">
               <BarChart3 className="h-6 w-6 mr-2" />
-              Rapports et Analyses
+              {t('pages.reporting.title')}
             </h1>
-            <p className="text-gray-500 mt-1">Consultez vos rapports financiers et analyses détaillées</p>
+            <p className="text-gray-500 mt-1">{t('pages.reporting.description')}</p>
           </div>
 
           {/* Coming Soon Card */}
@@ -24,14 +27,14 @@ const Reporting = () => {
             <div className="max-w-md mx-auto">
               <BarChart3 className="h-16 w-16 text-blue-500 mx-auto mb-4" />
               <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Page Rapports
+                {t('pages.reporting.comingSoon')}
               </h2>
               <p className="text-gray-600 mb-4">
-                Cette section est en cours de développement. Bientôt disponible avec des fonctionnalités avancées de reporting.
+                {t('pages.reporting.inDevelopment')}
               </p>
               <div className="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-800 rounded-full text-sm font-medium">
                 <Calendar className="h-4 w-4 mr-2" />
-                Prochainement disponible
+                {t('pages.reporting.availableSoon')}
               </div>
             </div>
           </div>
@@ -41,14 +44,14 @@ const Reporting = () => {
             <Card className="opacity-60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Rapports Financiers
+                  {t('pages.reporting.financialReports')}
                 </CardTitle>
                 <TrendingUp className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-400">---</div>
                 <p className="text-xs text-muted-foreground">
-                  Bilan, compte de résultat, flux de trésorerie
+                  {t('pages.reporting.financialReportsDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -56,14 +59,14 @@ const Reporting = () => {
             <Card className="opacity-60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Analyses TVA
+                  {t('pages.reporting.vatAnalysis')}
                 </CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-400">---</div>
                 <p className="text-xs text-muted-foreground">
-                  Déclarations TVA et analyses détaillées
+                  {t('pages.reporting.vatAnalysisDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -71,14 +74,14 @@ const Reporting = () => {
             <Card className="opacity-60">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Tableaux de Bord
+                  {t('pages.reporting.dashboards')}
                 </CardTitle>
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-gray-400">---</div>
                 <p className="text-xs text-muted-foreground">
-                  Visualisations interactives et KPIs
+                  {t('pages.reporting.dashboardsDesc')}
                 </p>
               </CardContent>
             </Card>
@@ -87,49 +90,49 @@ const Reporting = () => {
           {/* Features Preview */}
           <Card>
             <CardHeader>
-              <CardTitle>Fonctionnalités à venir</CardTitle>
+              <CardTitle>{t('pages.reporting.upcomingFeatures')}</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Rapports Automatisés</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">{t('pages.reporting.automatedReports')}</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                      Génération automatique de bilans
+                      {t('pages.reporting.automaticBilans')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                      Comptes de résultat détaillés
+                      {t('pages.reporting.detailedProfitLoss')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                      Analyses de flux de trésorerie
+                      {t('pages.reporting.cashFlowAnalysis')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mr-3"></div>
-                      Rapports personnalisables
+                      {t('pages.reporting.customReports')}
                     </li>
                   </ul>
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900 mb-3">Analyses Avancées</h3>
+                  <h3 className="font-semibold text-gray-900 mb-3">{t('pages.reporting.advancedAnalysis')}</h3>
                   <ul className="space-y-2 text-gray-600">
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                      Prévisions financières
+                      {t('pages.reporting.financialForecasts')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                      Analyses de tendances
+                      {t('pages.reporting.trendAnalysis')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                      Comparaisons périodiques
+                      {t('pages.reporting.periodicComparisons')}
                     </li>
                     <li className="flex items-center">
                       <div className="w-2 h-2 bg-green-500 rounded-full mr-3"></div>
-                      Alertes intelligentes
+                      {t('pages.reporting.smartAlerts')}
                     </li>
                   </ul>
                 </div>

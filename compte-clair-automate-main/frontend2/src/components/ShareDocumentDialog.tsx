@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,15 +6,15 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
-import { documentsService, SharedUser } from '@/services/documents.service';
-import { useToast } from '@/components/ui/use-toast';
-import { Loader2, X } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { documentsService, SharedUser } from "@/services/documents.service";
+import { useToast } from "@/components/ui/use-toast";
+import { useTranslation } from "react-i18next";
+import { Loader2, X } from "lucide-react";
 
 interface ShareDocumentDialogProps {
   documentId: string;
@@ -29,18 +29,32 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
   onClose,
   onShareSuccess,
 }) => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState("");
   const [isPublic, setIsPublic] = useState(false);
   const [sharedUsers, setSharedUsers] = useState<SharedUser[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingUsers, setIsLoadingUsers] = useState(false);
   const { toast } = useToast();
+  const { t } = useTranslation();
 
   useEffect(() => {
     if (isOpen) {
-      loadSharedUsers();
+      loadDocumentData();
     }
   }, [isOpen, documentId]);
+
+  const loadDocumentData = async () => {
+    await Promise.all([loadSharedUsers(), loadDocumentStatus()]);
+  };
+
+  const loadDocumentStatus = async () => {
+    try {
+      const document = await documentsService.getDocument(documentId);
+      setIsPublic(document.isPublic);
+    } catch (error) {
+      console.error("Failed to load document status:", error);
+    }
+  };
 
   const loadSharedUsers = async () => {
     try {
@@ -49,9 +63,9 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
       setSharedUsers(users);
     } catch (error) {
       toast({
-        title: 'Erreur',
-        description: 'Impossible de charger la liste des utilisateurs partagés',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("documents.share.loadUsersError"),
+        variant: "destructive",
       });
     } finally {
       setIsLoadingUsers(false);
@@ -61,9 +75,9 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
   const handleShare = async () => {
     if (!email) {
       toast({
-        title: 'Erreur',
-        description: 'Veuillez entrer une adresse email',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("documents.share.enterEmail"),
+        variant: "destructive",
       });
       return;
     }
@@ -72,31 +86,57 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
       setIsLoading(true);
       // First find the user by email
       const user = await documentsService.searchUserByEmail(email);
-      
+
       // Then share the document with the found user
-      await documentsService.shareDocument(documentId, [user.id], isPublic);
+      await documentsService.shareDocument(documentId, [user.id], false);
       toast({
-        title: 'Succès',
-        description: 'Document partagé avec succès',
+        title: t("common.success"),
+        description: t("documents.share.shareSuccess"),
       });
       onShareSuccess();
-      setEmail('');
+      setEmail("");
       // Refresh the shared users list
       loadSharedUsers();
     } catch (error: any) {
       if (error.response?.status === 404) {
         toast({
-          title: 'Erreur',
-          description: 'Utilisateur non trouvé',
-          variant: 'destructive',
+          title: t("common.error"),
+          description: t("documents.share.userNotFound"),
+          variant: "destructive",
         });
       } else {
         toast({
-          title: 'Erreur',
-          description: 'Impossible de partager le document',
-          variant: 'destructive',
+          title: t("common.error"),
+          description: t("documents.share.shareError"),
+          variant: "destructive",
         });
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleTogglePublic = async (checked: boolean) => {
+    try {
+      setIsLoading(true);
+      await documentsService.setDocumentPublic(documentId, checked);
+
+      setIsPublic(checked);
+      toast({
+        title: t("common.success"),
+        description: checked
+          ? t("documents.share.publicSuccess")
+          : t("documents.share.privateSuccess"),
+      });
+      onShareSuccess();
+    } catch (error) {
+      toast({
+        title: t("common.error"),
+        description: t("documents.share.publicError"),
+        variant: "destructive",
+      });
+      // Revert the switch state on error
+      setIsPublic(!checked);
     } finally {
       setIsLoading(false);
     }
@@ -106,16 +146,16 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
     try {
       setIsLoading(true);
       await documentsService.unshareDocument(documentId, userId);
-      setSharedUsers(users => users.filter(user => user.id !== userId));
+      setSharedUsers((users) => users.filter((user) => user.id !== userId));
       toast({
-        title: 'Succès',
-        description: 'Accès au document révoqué',
+        title: t("common.success"),
+        description: t("documents.share.unshareSuccess"),
       });
     } catch (error) {
       toast({
-        title: 'Erreur',
-        description: 'Impossible de révoquer l\'accès',
-        variant: 'destructive',
+        title: t("common.error"),
+        description: t("documents.share.unshareError"),
+        variant: "destructive",
       });
     } finally {
       setIsLoading(false);
@@ -126,30 +166,27 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Partager le document</DialogTitle>
+          <DialogTitle>{t("documents.share.title")}</DialogTitle>
           <DialogDescription>
-            Partagez ce document avec d'autres utilisateurs ou rendez-le public.
+            {t("documents.share.description")}
           </DialogDescription>
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid gap-2">
-            <Label htmlFor="email">Email de l'utilisateur</Label>
+            <Label htmlFor="email">{t("documents.share.userEmail")}</Label>
             <div className="flex gap-2">
               <Input
                 id="email"
                 type="email"
-                placeholder="exemple@email.com"
+                placeholder={t("documents.share.emailPlaceholder")}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
-              <Button
-                onClick={handleShare}
-                disabled={isLoading || !email}
-              >
+              <Button onClick={handleShare} disabled={isLoading || !email}>
                 {isLoading ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
-                  'Partager'
+                  t("documents.share.shareButton")
                 )}
               </Button>
             </div>
@@ -159,13 +196,14 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
             <Switch
               id="public"
               checked={isPublic}
-              onCheckedChange={setIsPublic}
+              onCheckedChange={handleTogglePublic}
+              disabled={isLoading}
             />
-            <Label htmlFor="public">Rendre public</Label>
+            <Label htmlFor="public">{t("documents.share.makePublic")}</Label>
           </div>
 
           <div className="space-y-2">
-            <Label>Utilisateurs avec accès</Label>
+            <Label>{t("documents.share.sharedUsers")}</Label>
             {isLoadingUsers ? (
               <div className="flex justify-center py-4">
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -194,14 +232,14 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
               </div>
             ) : (
               <p className="text-sm text-gray-500">
-                Aucun utilisateur n'a accès à ce document
+                {t("documents.share.noSharedUsers")}
               </p>
             )}
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>
-            Fermer
+            {t("common.close")}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -209,4 +247,4 @@ const ShareDocumentDialog: React.FC<ShareDocumentDialogProps> = ({
   );
 };
 
-export default ShareDocumentDialog; 
+export default ShareDocumentDialog;

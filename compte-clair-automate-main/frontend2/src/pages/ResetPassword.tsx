@@ -1,21 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { usersService } from '@/services/users.service';
-import { toast } from '@/hooks/use-toast';
-import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from "react";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { usersService } from "@/services/users.service";
+import { toast } from "@/hooks/use-toast";
+import { Eye, EyeOff, Lock, CheckCircle, AlertCircle } from "lucide-react";
 
 const ResetPassword = () => {
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const token = searchParams.get('token');
+  const token = searchParams.get("token");
 
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -34,7 +36,7 @@ const ResetPassword = () => {
         const result = await usersService.validateResetToken(token);
         setIsValidToken(result.valid);
       } catch (error) {
-        console.error('Error validating token:', error);
+        console.error("Error validating token:", error);
         setIsValidToken(false);
       } finally {
         setIsValidating(false);
@@ -49,8 +51,8 @@ const ResetPassword = () => {
 
     if (password !== confirmPassword) {
       toast({
-        title: "Erreur",
-        description: "Les mots de passe ne correspondent pas",
+        title: t("common.error"),
+        description: t("resetPassword.passwordMismatch"),
         variant: "destructive",
       });
       return;
@@ -58,8 +60,8 @@ const ResetPassword = () => {
 
     if (password.length < 6) {
       toast({
-        title: "Erreur",
-        description: "Le mot de passe doit contenir au moins 6 caractères",
+        title: t("common.error"),
+        description: t("resetPassword.passwordTooShort"),
         variant: "destructive",
       });
       return;
@@ -67,8 +69,8 @@ const ResetPassword = () => {
 
     if (!token) {
       toast({
-        title: "Erreur",
-        description: "Token de réinitialisation manquant",
+        title: t("common.error"),
+        description: t("resetPassword.missingToken"),
         variant: "destructive",
       });
       return;
@@ -79,19 +81,19 @@ const ResetPassword = () => {
       await usersService.resetPassword(token, password);
       setIsSuccess(true);
       toast({
-        title: "Succès",
-        description: "Votre mot de passe a été réinitialisé avec succès",
+        title: t("common.success"),
+        description: t("resetPassword.resetSuccess"),
       });
-      
+
       // Redirect to login after 3 seconds
       setTimeout(() => {
-        navigate('/login');
+        navigate("/login");
       }, 3000);
     } catch (error) {
-      console.error('Error resetting password:', error);
+      console.error("Error resetting password:", error);
       toast({
-        title: "Erreur",
-        description: "Impossible de réinitialiser le mot de passe. Le lien a peut-être expiré.",
+        title: t("common.error"),
+        description: t("resetPassword.resetError"),
         variant: "destructive",
       });
     } finally {
@@ -106,7 +108,9 @@ const ResetPassword = () => {
           <CardContent className="pt-6">
             <div className="flex items-center justify-center">
               <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-              <span className="ml-3 text-gray-600">Validation du lien...</span>
+              <span className="ml-3 text-gray-600">
+                {t("resetPassword.validatingLink")}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -121,22 +125,18 @@ const ResetPassword = () => {
           <CardHeader>
             <CardTitle className="flex items-center text-red-600">
               <AlertCircle className="h-5 w-5 mr-2" />
-              Lien invalide
+              {t("resetPassword.invalidLink")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert variant="destructive">
               <AlertDescription>
-                Ce lien de réinitialisation est invalide ou a expiré. 
-                Veuillez demander un nouveau lien de réinitialisation.
+                {t("resetPassword.invalidLinkDescription")}
               </AlertDescription>
             </Alert>
             <div className="mt-4">
-              <Button 
-                onClick={() => navigate('/login')} 
-                className="w-full"
-              >
-                Retour à la connexion
+              <Button onClick={() => navigate("/login")} className="w-full">
+                {t("resetPassword.backToLogin")}
               </Button>
             </div>
           </CardContent>
@@ -152,22 +152,18 @@ const ResetPassword = () => {
           <CardHeader>
             <CardTitle className="flex items-center text-green-600">
               <CheckCircle className="h-5 w-5 mr-2" />
-              Mot de passe réinitialisé
+              {t("resetPassword.passwordReset")}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <Alert>
               <AlertDescription>
-                Votre mot de passe a été réinitialisé avec succès. 
-                Vous allez être redirigé vers la page de connexion.
+                {t("resetPassword.passwordResetSuccess")}
               </AlertDescription>
             </Alert>
             <div className="mt-4">
-              <Button 
-                onClick={() => navigate('/login')} 
-                className="w-full"
-              >
-                Aller à la connexion
+              <Button onClick={() => navigate("/login")} className="w-full">
+                {t("resetPassword.goToLogin")}
               </Button>
             </div>
           </CardContent>
@@ -182,20 +178,20 @@ const ResetPassword = () => {
         <CardHeader>
           <CardTitle className="flex items-center">
             <Lock className="h-5 w-5 mr-2" />
-            Réinitialiser le mot de passe
+            {t("resetPassword.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="password">Nouveau mot de passe</Label>
+              <Label htmlFor="password">{t("resetPassword.newPassword")}</Label>
               <div className="relative">
                 <Input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Entrez votre nouveau mot de passe"
+                  placeholder={t("resetPassword.newPasswordPlaceholder")}
                   required
                   minLength={6}
                 />
@@ -216,14 +212,16 @@ const ResetPassword = () => {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="confirmPassword">Confirmer le mot de passe</Label>
+              <Label htmlFor="confirmPassword">
+                {t("resetPassword.confirmPassword")}
+              </Label>
               <div className="relative">
                 <Input
                   id="confirmPassword"
                   type={showConfirmPassword ? "text" : "password"}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="Confirmez votre nouveau mot de passe"
+                  placeholder={t("resetPassword.confirmPasswordPlaceholder")}
                   required
                   minLength={6}
                 />
@@ -246,34 +244,36 @@ const ResetPassword = () => {
             {password && confirmPassword && password !== confirmPassword && (
               <Alert variant="destructive">
                 <AlertDescription>
-                  Les mots de passe ne correspondent pas
+                  {t("resetPassword.passwordMismatch")}
                 </AlertDescription>
               </Alert>
             )}
 
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading || password !== confirmPassword || password.length < 6}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={
+                isLoading || password !== confirmPassword || password.length < 6
+              }
             >
               {isLoading ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Réinitialisation...
+                  {t("resetPassword.resetting")}
                 </>
               ) : (
-                'Réinitialiser le mot de passe'
+                t("resetPassword.resetPasswordButton")
               )}
             </Button>
           </form>
 
           <div className="mt-4 text-center">
-            <Button 
-              variant="link" 
-              onClick={() => navigate('/login')}
+            <Button
+              variant="link"
+              onClick={() => navigate("/login")}
               className="text-sm"
             >
-              Retour à la connexion
+              {t("resetPassword.backToLogin")}
             </Button>
           </div>
         </CardContent>

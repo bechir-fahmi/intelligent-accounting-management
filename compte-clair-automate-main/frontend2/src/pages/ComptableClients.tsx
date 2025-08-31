@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,6 +44,7 @@ const initialClients = [
 ];
 
 const ComptableClients = () => {
+  const { t } = useTranslation();
   const [clients, setClients] = useState(initialClients);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -71,8 +73,8 @@ const ComptableClients = () => {
     setNewClient({ name: '', contactName: '', email: '', phone: '', sector: 'Technologie' });
     setIsAddDialogOpen(false);
     toast({
-      title: "Client ajouté",
-      description: "Le client a été ajouté avec succès",
+      title: t("pages.clients.clientAdded"),
+      description: t("pages.clients.clientAddedSuccess"),
     });
   };
 
@@ -83,8 +85,8 @@ const ComptableClients = () => {
       ));
       setIsEditDialogOpen(false);
       toast({
-        title: "Client modifié",
-        description: "Le client a été modifié avec succès",
+        title: t("pages.clients.clientUpdated"),
+        description: t("pages.clients.clientUpdatedSuccess"),
       });
     }
   };
@@ -92,8 +94,8 @@ const ComptableClients = () => {
   const handleDeleteClient = (id: number) => {
     setClients(clients.filter(client => client.id !== id));
     toast({
-      title: "Client supprimé",
-      description: "Le client a été supprimé avec succès",
+      title: t("pages.clients.clientDeleted"),
+      description: t("pages.clients.clientDeletedSuccess"),
     });
   };
 
@@ -112,13 +114,13 @@ const ComptableClients = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                 <FileText className="h-6 w-6 mr-2" />
-                Gestion des clients
+                {t('pages.clients.title')}
               </h1>
-              <p className="text-gray-500 mt-1">Gérez votre portefeuille de clients</p>
+              <p className="text-gray-500 mt-1">{t('pages.clients.description')}</p>
             </div>
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter un client
+              {t('pages.clients.addClient')}
             </Button>
           </div>
           
@@ -126,13 +128,13 @@ const ComptableClients = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Société</TableHead>
-                  <TableHead>Contact</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Téléphone</TableHead>
-                  <TableHead>Secteur</TableHead>
-                  <TableHead>Statut</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('pages.clients.company')}</TableHead>
+                  <TableHead>{t('pages.clients.contact')}</TableHead>
+                  <TableHead>{t('pages.clients.email')}</TableHead>
+                  <TableHead>{t('pages.clients.phone')}</TableHead>
+                  <TableHead>{t('pages.clients.sector')}</TableHead>
+                  <TableHead>{t('pages.clients.status')}</TableHead>
+                  <TableHead>{t('pages.clients.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -147,7 +149,7 @@ const ComptableClients = () => {
                       <span className={`px-2 py-1 text-xs rounded-full ${
                         client.status === 'Actif' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {client.status}
+                        {client.status === 'Actif' ? t('pages.clients.active') : t('pages.clients.inactive')}
                       </span>
                     </TableCell>
                     <TableCell>
@@ -163,7 +165,7 @@ const ComptableClients = () => {
                   </TableRow>
                 ))}
               </TableBody>
-              <TableCaption>Liste des clients</TableCaption>
+              <TableCaption>{t('pages.clients.clientsList')}</TableCaption>
             </Table>
           </div>
         </div>
@@ -173,11 +175,11 @@ const ComptableClients = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter un client</DialogTitle>
+            <DialogTitle>{t('pages.clients.addClient')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nom de la société</Label>
+              <Label htmlFor="name">{t('pages.clients.companyName')}</Label>
               <Input 
                 id="name" 
                 value={newClient.name}
@@ -185,7 +187,7 @@ const ComptableClients = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="contactName">Nom du contact</Label>
+              <Label htmlFor="contactName">{t('pages.clients.contactName')}</Label>
               <Input 
                 id="contactName" 
                 value={newClient.contactName}
@@ -193,7 +195,7 @@ const ComptableClients = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('pages.clients.email')}</Label>
               <Input 
                 id="email" 
                 type="email"
@@ -202,7 +204,7 @@ const ComptableClients = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Téléphone</Label>
+              <Label htmlFor="phone">{t('pages.clients.phone')}</Label>
               <Input 
                 id="phone" 
                 value={newClient.phone}
@@ -210,28 +212,28 @@ const ComptableClients = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="sector">Secteur d'activité</Label>
+              <Label htmlFor="sector">{t('pages.clients.activitySector')}</Label>
               <Select 
                 value={newClient.sector}
                 onValueChange={(value) => setNewClient({...newClient, sector: value})}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un secteur" />
+                  <SelectValue placeholder={t('pages.clients.selectSector')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Technologie">Technologie</SelectItem>
-                  <SelectItem value="Finance">Finance</SelectItem>
-                  <SelectItem value="Santé">Santé</SelectItem>
-                  <SelectItem value="Commerce">Commerce</SelectItem>
-                  <SelectItem value="Immobilier">Immobilier</SelectItem>
-                  <SelectItem value="Autre">Autre</SelectItem>
+                  <SelectItem value="Technologie">{t('pages.clients.technology')}</SelectItem>
+                  <SelectItem value="Finance">{t('pages.clients.finance')}</SelectItem>
+                  <SelectItem value="Santé">{t('pages.clients.health')}</SelectItem>
+                  <SelectItem value="Commerce">{t('pages.clients.commerce')}</SelectItem>
+                  <SelectItem value="Immobilier">{t('pages.clients.realEstate')}</SelectItem>
+                  <SelectItem value="Autre">{t('pages.clients.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Annuler</Button>
-            <Button onClick={handleAddClient}>Ajouter</Button>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>{t('common.cancel')}</Button>
+            <Button onClick={handleAddClient}>{t('pages.clients.addClient')}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -284,14 +286,14 @@ const ComptableClients = () => {
                   onValueChange={(value) => setCurrentClient({...currentClient, sector: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un secteur" />
+                    <SelectValue placeholder={t('pages.clients.selectSector')} />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="Technologie">Technologie</SelectItem>
-                    <SelectItem value="Finance">Finance</SelectItem>
-                    <SelectItem value="Santé">Santé</SelectItem>
-                    <SelectItem value="Commerce">Commerce</SelectItem>
-                    <SelectItem value="Immobilier">Immobilier</SelectItem>
+                    <SelectItem value="Technologie">{t('pages.clients.technology')}</SelectItem>
+                    <SelectItem value="Finance">{t('pages.clients.finance')}</SelectItem>
+                    <SelectItem value="Santé">{t('pages.clients.health')}</SelectItem>
+                    <SelectItem value="Commerce">{t('pages.clients.commerce')}</SelectItem>
+                    <SelectItem value="Immobilier">{t('pages.clients.realEstate')}</SelectItem>
                     <SelectItem value="Autre">Autre</SelectItem>
                   </SelectContent>
                 </Select>
@@ -303,7 +305,7 @@ const ComptableClients = () => {
                   onValueChange={(value) => setCurrentClient({...currentClient, status: value})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un statut" />
+                    <SelectValue placeholder={t('pages.clients.selectStatus')} />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Actif">Actif</SelectItem>

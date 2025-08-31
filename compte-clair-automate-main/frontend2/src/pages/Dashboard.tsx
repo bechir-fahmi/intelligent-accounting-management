@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { useAuth } from '@/contexts/AuthContext';
@@ -12,6 +13,7 @@ import { documentsService } from '@/services/documents.service';
 import { usersService } from '@/services/users.service';
 
 const Dashboard = () => {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [documentCount, setDocumentCount] = useState(0);
   const [userCount, setUserCount] = useState(0);
@@ -90,7 +92,7 @@ const Dashboard = () => {
               <UserAvatar size="lg" />
               <div>
                 <h1 className="text-2xl font-bold text-gray-900">
-                  Bienvenue, {user?.name}
+                  {t('dashboard.welcome')}, {user?.name}
                 </h1>
                 <p className="text-gray-500">
                   {user?.email}
@@ -104,14 +106,14 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Documents
+                  {t('navigation.documents')}
                 </CardTitle>
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{loading ? '...' : documentCount}</div>
                 <p className="text-xs text-muted-foreground">
-                  Documents traités
+                  {t('dashboard.documentsProcessed')}
                 </p>
               </CardContent>
             </Card>
@@ -119,14 +121,14 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Utilisateurs
+                  {t('navigation.users')}
                 </CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{loading ? '...' : userCount}</div>
                 <p className="text-xs text-muted-foreground">
-                  Utilisateurs actifs
+                  {t('dashboard.activeUsers')}
                 </p>
               </CardContent>
             </Card>
@@ -134,14 +136,14 @@ const Dashboard = () => {
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
-                  Imports
+                  {t('dashboard.totalImports')}
                 </CardTitle>
                 <Upload className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{loading ? '...' : importCount}</div>
                 <p className="text-xs text-muted-foreground">
-                  Documents importés
+                  {t('dashboard.importedDocuments')}
                 </p>
               </CardContent>
             </Card>
@@ -150,11 +152,11 @@ const Dashboard = () => {
           {/* Cards Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
             <DashboardCard 
-              title="Chiffre d'affaires" 
+              title={t('dashboard.revenueTitle')} 
               value="48 590,00 €"
-              description="Total annuel" 
+              description={t('dashboard.totalAnnual')} 
               trend="up"
-              trendValue="+5.2% vs mois précédent"
+              trendValue={`+5.2% ${t('dashboard.vsLastMonth')}`}
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -163,11 +165,11 @@ const Dashboard = () => {
             />
             
             <DashboardCard 
-              title="Dépenses" 
+              title={t('dashboard.expensesTitle')} 
               value="32 410,00 €"
-              description="Total annuel"
+              description={t('dashboard.totalAnnual')}
               trend="down"
-              trendValue="-2.1% vs mois précédent"
+              trendValue={`-2.1% ${t('dashboard.vsLastMonth')}`}
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -176,11 +178,11 @@ const Dashboard = () => {
             />
             
             <DashboardCard 
-              title="Bénéfice net" 
+              title={t('dashboard.netProfit')} 
               value="16 180,00 €"
-              description="Total annuel"
+              description={t('dashboard.totalAnnual')}
               trend="up"
-              trendValue="+8.3% vs mois précédent"
+              trendValue={`+8.3% ${t('dashboard.vsLastMonth')}`}
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
@@ -189,9 +191,9 @@ const Dashboard = () => {
             />
             
             <DashboardCard 
-              title="Documents traités" 
+              title={t('dashboard.documentsProcessed')} 
               value="324"
-              description="Derniers 30 jours"
+              description={t('dashboard.last30Days')}
               icon={
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -202,19 +204,19 @@ const Dashboard = () => {
 
           {/* Charts Section */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-            <FinancialChart title="Revenus" data={revenueData} color="#3B82F6" />
-            <FinancialChart title="Dépenses" data={expensesData} color="#EF4444" />
+            <FinancialChart title={t('dashboard.revenues')} data={revenueData} color="#3B82F6" />
+            <FinancialChart title={t('dashboard.expensesTitle')} data={expensesData} color="#EF4444" />
           </div>
           
           <div className="mb-8">
-            <FinancialChart title="Flux de trésorerie" data={cashflowData} color="#10B981" />
+            <FinancialChart title={t('dashboard.cashFlow')} data={cashflowData} color="#10B981" />
           </div>
 
           {/* Bilan Generation Feature - Demo removed, use /bilan route directly */}
 
           {/* Recent Activity */}
           <div className="bg-white shadow rounded-lg p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Activités récentes</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">{t('dashboard.recentActivity')}</h2>
             <div className="flow-root">
               <ul className="-my-5 divide-y divide-gray-200">
                 <li className="py-4">
@@ -227,11 +229,11 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Facture #F2023-089 traitée</p>
-                      <p className="text-sm text-gray-500">Electricité EDF - 126,42 €</p>
+                      <p className="text-sm font-medium text-gray-900">{t('dashboard.invoiceProcessed')}</p>
+                      <p className="text-sm text-gray-500">{t('dashboard.electricityEDF')}</p>
                     </div>
                     <div className="text-sm text-gray-500">
-                      Aujourd'hui, 09:45
+                      {t('dashboard.today')}
                     </div>
                   </div>
                 </li>
@@ -245,11 +247,11 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Paiement client reçu</p>
-                      <p className="text-sm text-gray-500">Tech Solutions SAS - 2 400,00 €</p>
+                      <p className="text-sm font-medium text-gray-900">{t('dashboard.clientPaymentReceived')}</p>
+                      <p className="text-sm text-gray-500">{t('dashboard.techSolutions')}</p>
                     </div>
                     <div className="text-sm text-gray-500">
-                      Hier, 14:20
+                      {t('dashboard.yesterday')}
                     </div>
                   </div>
                 </li>
@@ -263,11 +265,11 @@ const Dashboard = () => {
                       </div>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900">Échéance TVA à venir</p>
-                      <p className="text-sm text-gray-500">Déclaration à soumettre avant le 31/05/2025</p>
+                      <p className="text-sm font-medium text-gray-900">{t('dashboard.vatDeadline')}</p>
+                      <p className="text-sm text-gray-500">{t('dashboard.vatDeclaration')}</p>
                     </div>
                     <div className="text-sm text-gray-500">
-                      Il y a 2 jours
+                      {t('dashboard.twoDaysAgo')}
                     </div>
                   </div>
                 </li>
@@ -275,7 +277,7 @@ const Dashboard = () => {
             </div>
             <div className="mt-6">
               <a href="#" className="w-full flex justify-center items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
-                Voir toutes les activités
+                {t('dashboard.viewAllActivities')}
               </a>
             </div>
           </div>

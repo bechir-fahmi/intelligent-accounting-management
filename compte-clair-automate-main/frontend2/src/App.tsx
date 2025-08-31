@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
+import './i18n'; // Initialize i18n
 import Login from './pages/Login';
 import ProtectedRoute from './components/ProtectedRoute';
 import Dashboard from './pages/Dashboard';
@@ -84,7 +85,7 @@ const App: React.FC = () => {
             <Route
               path="/comptable/clients"
               element={
-                <ProtectedRoute allowedRoles={['comptable', 'admin']}>
+                <ProtectedRoute allowedRoles={['accountant', 'admin']}>
                   <ComptableClients />
                 </ProtectedRoute>
               }

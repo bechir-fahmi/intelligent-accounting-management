@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const isAdmin = user?.type === 'admin';
-  const isComptable = user?.type === 'comptable';
+  const isComptable = user?.type === 'accountant';
 
   return (
     <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated, isAdmin, isComptable }}>

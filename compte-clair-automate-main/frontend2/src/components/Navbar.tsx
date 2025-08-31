@@ -3,12 +3,15 @@ import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { LogOut, User, Users, Lock, FileText, BarChart3, Calculator } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import UserAvatar from '@/components/UserAvatar';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const Navbar = () => {
   const location = useLocation();
   const { user, logout, isAuthenticated, isAdmin, isComptable } = useAuth();
   const [isLoggingOut, setIsLoggingOut] = React.useState(false);
+  const { t } = useTranslation();
   
   if (!isAuthenticated) return null;
   
@@ -25,33 +28,33 @@ const Navbar = () => {
                 to="/dashboard" 
                 className={`${location.pathname === '/dashboard' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Tableau de bord
+                {t('navigation.dashboard')}
               </Link>
               <Link 
                 to="/documents" 
                 className={`${location.pathname === '/documents' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Documents
+                {t('navigation.documents')}
               </Link>
               <Link 
                 to="/upload" 
                 className={`${location.pathname === '/upload' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
-                Importer
+                {t('common.upload')}
               </Link>
               <Link 
                 to="/reporting" 
                 className={`${location.pathname === '/reporting' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 <BarChart3 className="h-4 w-4 mr-1" />
-                Rapports
+                {t('navigation.reports')}
               </Link>
               <Link 
                 to="/bilan" 
                 className={`${location.pathname === '/bilan' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
               >
                 <Calculator className="h-4 w-4 mr-1" />
-                Bilan
+                {t('bilan.title')}
               </Link>
               
               {/* Menu uniquement visible pour les administrateurs */}
@@ -61,7 +64,7 @@ const Navbar = () => {
                   className={`${location.pathname === '/admin/users' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   <Users className="h-4 w-4 mr-1" />
-                  Gestion Utilisateurs
+                  {t('navigation.users')}
                 </Link>
               )}
               
@@ -72,20 +75,21 @@ const Navbar = () => {
                   className={`${location.pathname === '/comptable/clients' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500 hover:text-blue-600 hover:border-blue-600'} inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium`}
                 >
                   <FileText className="h-4 w-4 mr-1" />
-                  Clients
+                  {t('navigation.clients')}
                 </Link>
               )}
             </div>
           </div>
           <div className="hidden sm:ml-6 sm:flex sm:items-center">
             <div className="flex items-center space-x-4">
+              <LanguageSwitcher />
               <div className="flex items-center space-x-2">
                 <UserAvatar size="sm" />
                 <div className="text-sm text-gray-600">
                   {user?.email}
                   <span className={`ml-1 px-2 py-1 text-xs rounded-full ${
                     user?.type === 'admin' ? 'bg-purple-100 text-purple-800' :
-                    user?.type === 'comptable' ? 'bg-green-100 text-green-800' :
+                    user?.type === 'accountant' ? 'bg-green-100 text-green-800' :
                     'bg-blue-100 text-blue-800'
                   }`}>
                     {user?.type}
@@ -110,13 +114,13 @@ const Navbar = () => {
                 }}
               >
                 <LogOut className="h-4 w-4 mr-1" />
-                {isLoggingOut ? 'Déconnexion...' : 'Se déconnecter'}
+                {isLoggingOut ? t('navbar.loggingOut') : t('navbar.logout')}
               </Button>
             </div>
           </div>
           <div className="flex items-center sm:hidden">
             <button type="button" className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500" aria-expanded="false">
-              <span className="sr-only">Ouvrir le menu</span>
+              <span className="sr-only">{t('navbar.openMenu')}</span>
               <svg className="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
               </svg>

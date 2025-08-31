@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import { Table, TableBody, TableCaption, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -14,6 +15,7 @@ import { generateRandomPassword } from '@/lib/utils';
 import PasswordDisplay from '@/components/PasswordDisplay';
 
 const AdminUsers = () => {
+  const { t } = useTranslation();
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
@@ -41,8 +43,8 @@ const AdminUsers = () => {
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de charger la liste des utilisateurs",
+        title: t("common.error"),
+        description: t("pages.adminUsers.errorLoading"),
         variant: "destructive",
       });
     } finally {
@@ -54,8 +56,8 @@ const AdminUsers = () => {
     // Validation
     if (!newUser.name.trim() || !newUser.email.trim()) {
       toast({
-        title: "Erreur",
-        description: "Veuillez remplir tous les champs obligatoires",
+        title: t("common.error"),
+        description: t("pages.adminUsers.fillAllFields"),
         variant: "destructive",
       });
       return;
@@ -82,8 +84,8 @@ const AdminUsers = () => {
     } catch (error) {
       console.error('Error creating user:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de créer l'utilisateur",
+        title: t("common.error"),
+        description: t("pages.adminUsers.errorCreating"),
         variant: "destructive",
       });
     }
@@ -101,38 +103,38 @@ const AdminUsers = () => {
       
       await usersService.updateUser(currentUser.id, updateData);
       toast({
-        title: "Succès",
-        description: "Utilisateur mis à jour avec succès",
+        title: t("common.success"),
+        description: t("pages.adminUsers.userUpdated"),
       });
       setIsEditDialogOpen(false);
       fetchUsers();
     } catch (error) {
       console.error('Error updating user:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de mettre à jour l'utilisateur",
+        title: t("common.error"),
+        description: t("pages.adminUsers.errorUpdating"),
         variant: "destructive",
       });
     }
   };
 
   const handleDeleteUser = async (id: string) => {
-    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
+    if (!window.confirm(t('pages.adminUsers.confirmDelete'))) {
       return;
     }
 
     try {
       await usersService.deleteUser(id);
       toast({
-        title: "Succès",
-        description: "Utilisateur supprimé avec succès",
+        title: t("common.success"),
+        description: t("pages.adminUsers.userDeleted"),
       });
       fetchUsers();
     } catch (error) {
       console.error('Error deleting user:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible de supprimer l'utilisateur",
+        title: t("common.error"),
+        description: t("pages.adminUsers.errorDeleting"),
         variant: "destructive",
       });
     }
@@ -144,7 +146,7 @@ const AdminUsers = () => {
   };
 
   const handleResetPassword = async (user: User) => {
-    if (!window.confirm(`Êtes-vous sûr de vouloir envoyer un email de réinitialisation à ${user.email} ?`)) {
+    if (!window.confirm(`${t('pages.adminUsers.confirmResetPassword')} ${user.email} ?`)) {
       return;
     }
 
@@ -152,14 +154,14 @@ const AdminUsers = () => {
       await usersService.forgotPassword(user.email);
       
       toast({
-        title: "Email envoyé",
-        description: `Un email de réinitialisation a été envoyé à ${user.email}`,
+        title: t("pages.adminUsers.emailSent"),
+        description: `${t('pages.adminUsers.resetEmailSent')} ${user.email}`,
       });
     } catch (error) {
       console.error('Error sending reset email:', error);
       toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer l'email de réinitialisation",
+        title: t("common.error"),
+        description: t("pages.adminUsers.errorSendingReset"),
         variant: "destructive",
       });
     }
@@ -206,13 +208,13 @@ const AdminUsers = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-900 flex items-center">
                 <Users className="h-6 w-6 mr-2" />
-                Gestion des utilisateurs
+                {t('pages.adminUsers.title')}
               </h1>
-              <p className="text-gray-500 mt-1">Gérez les utilisateurs et leurs permissions</p>
+              <p className="text-gray-500 mt-1">{t('pages.adminUsers.description')}</p>
             </div>
             <Button onClick={() => setIsAddDialogOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
-              Ajouter un utilisateur
+              {t('pages.adminUsers.addUser')}
             </Button>
           </div>
           
@@ -220,11 +222,11 @@ const AdminUsers = () => {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Rôle</TableHead>
-                  <TableHead>Date de création</TableHead>
-                  <TableHead>Actions</TableHead>
+                  <TableHead>{t('pages.adminUsers.name')}</TableHead>
+                  <TableHead>{t('pages.adminUsers.email')}</TableHead>
+                  <TableHead>{t('pages.adminUsers.role')}</TableHead>
+                  <TableHead>{t('pages.adminUsers.createdAt')}</TableHead>
+                  <TableHead>{t('pages.adminUsers.actions')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -249,7 +251,7 @@ const AdminUsers = () => {
                           variant="outline" 
                           size="sm" 
                           onClick={() => handleResetPassword(user)}
-                          title="Envoyer un email de réinitialisation"
+                          title={t('pages.adminUsers.sendResetEmail')}
                         >
                           <Mail className="h-4 w-4" />
                         </Button>
@@ -270,11 +272,11 @@ const AdminUsers = () => {
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Ajouter un utilisateur</DialogTitle>
+            <DialogTitle>{t('pages.adminUsers.addUserDialog')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nom</Label>
+              <Label htmlFor="name">{t('pages.adminUsers.name')}</Label>
               <Input 
                 id="name" 
                 value={newUser.name}
@@ -282,7 +284,7 @@ const AdminUsers = () => {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('pages.adminUsers.email')}</Label>
               <Input 
                 id="email" 
                 type="email"
@@ -292,17 +294,17 @@ const AdminUsers = () => {
             </div>
             <div className="bg-blue-50 p-3 rounded-md">
               <p className="text-sm text-blue-700">
-                <strong>Note:</strong> Un mot de passe sécurisé de 8 caractères sera généré automatiquement pour cet utilisateur.
+                <strong>{t('common.note')}:</strong> {t('pages.adminUsers.passwordNote')}
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="type">Rôle</Label>
+              <Label htmlFor="type">{t('pages.adminUsers.role')}</Label>
               <Select 
                 value={newUser.type}
                 onValueChange={(value) => setNewUser({...newUser, type: value as any})}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Sélectionner un rôle" />
+                  <SelectValue placeholder={t('pages.adminUsers.selectRole')} />
                 </SelectTrigger>
                 <SelectContent>
                   {USER_ROLES.map((role) => (
@@ -316,13 +318,13 @@ const AdminUsers = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button 
               onClick={handleAddUser}
               disabled={!newUser.name.trim() || !newUser.email.trim()}
             >
-              Ajouter
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -332,12 +334,12 @@ const AdminUsers = () => {
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Modifier l'utilisateur</DialogTitle>
+            <DialogTitle>{t('pages.adminUsers.editUserDialog')}</DialogTitle>
           </DialogHeader>
           {currentUser && (
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nom</Label>
+                <Label htmlFor="edit-name">{t('pages.adminUsers.name')}</Label>
                 <Input 
                   id="edit-name" 
                   value={currentUser.name}
@@ -345,7 +347,7 @@ const AdminUsers = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
+                <Label htmlFor="edit-email">{t('pages.adminUsers.email')}</Label>
                 <Input 
                   id="edit-email" 
                   type="email"
@@ -354,13 +356,13 @@ const AdminUsers = () => {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-type">Rôle</Label>
+                <Label htmlFor="edit-type">{t('pages.adminUsers.role')}</Label>
                 <Select 
                   value={currentUser.type}
                   onValueChange={(value) => setCurrentUser({...currentUser, type: value as any})}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Sélectionner un rôle" />
+                    <SelectValue placeholder={t('pages.adminUsers.selectRole')} />
                   </SelectTrigger>
                   <SelectContent>
                     {USER_ROLES.map((role) => (
@@ -375,10 +377,10 @@ const AdminUsers = () => {
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button onClick={handleUpdateUser}>
-              Enregistrer
+              {t('common.save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -388,25 +390,24 @@ const AdminUsers = () => {
       <Dialog open={isPasswordDialogOpen} onOpenChange={setIsPasswordDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Utilisateur créé avec succès</DialogTitle>
+            <DialogTitle>{t('pages.adminUsers.userCreatedSuccess')}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="bg-green-50 p-4 rounded-md">
               <p className="text-sm text-green-700 mb-3">
-                L'utilisateur a été créé avec succès. Voici le mot de passe généré automatiquement :
+                {t('pages.adminUsers.userCreated')}. {t('pages.adminUsers.generatedPassword')}
               </p>
               <PasswordDisplay password={generatedPassword} />
             </div>
             <div className="bg-amber-50 p-3 rounded-md">
               <p className="text-sm text-amber-700">
-                <strong>Important :</strong> Communiquez ce mot de passe à l'utilisateur de manière sécurisée. 
-                Il pourra le modifier lors de sa prochaine connexion.
+                <strong>{t('common.important')} :</strong> {t('pages.adminUsers.passwordImportant')}
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button onClick={() => setIsPasswordDialogOpen(false)}>
-              Fermer
+              {t('common.close')}
             </Button>
           </DialogFooter>
         </DialogContent>

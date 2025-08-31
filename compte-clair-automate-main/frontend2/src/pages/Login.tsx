@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../contexts/AuthContext';
 import { Eye, EyeOff, Mail, Lock, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -9,8 +10,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { usersService } from '@/services/users.service';
 import { toast } from '@/hooks/use-toast';
+import LanguageSwitcher from '@/components/LanguageSwitcher';
 
 const Login: React.FC = () => {
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -31,7 +34,7 @@ const Login: React.FC = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err) {
-      setError('Email ou mot de passe incorrect');
+      setError(t('auth.invalidCredentials'));
     } finally {
       setIsLoading(false);
     }
@@ -44,15 +47,15 @@ const Login: React.FC = () => {
     try {
       await usersService.forgotPassword(forgotPasswordEmail);
       toast({
-        title: "Email envoyé",
-        description: "Un email de réinitialisation a été envoyé à votre adresse",
+        title: t('login.emailSent'),
+        description: t('login.emailSentDescription'),
       });
       setShowForgotPassword(false);
       setForgotPasswordEmail('');
     } catch (error) {
       toast({
-        title: "Erreur",
-        description: "Impossible d'envoyer l'email de réinitialisation",
+        title: t('common.error'),
+        description: t('login.emailError'),
         variant: "destructive",
       });
     } finally {
@@ -62,20 +65,23 @@ const Login: React.FC = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="absolute top-4 right-4">
+        <LanguageSwitcher />
+      </div>
       <Card className="w-full max-w-md shadow-lg">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">
-            Bienvenue
+            {t('auth.login')}
           </CardTitle>
           <CardDescription className="text-center">
-            Connectez-vous à votre compte pour continuer
+            {t('auth.loginDescription', 'Connectez-vous à votre compte pour continuer')}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {!showForgotPassword ? (
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email">{t('auth.email')}</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -90,7 +96,7 @@ const Login: React.FC = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Mot de passe</Label>
+                <Label htmlFor="password">{t('auth.password')}</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
@@ -130,10 +136,10 @@ const Login: React.FC = () => {
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Connexion en cours...
+                    {t('login.loggingIn')}
                   </>
                 ) : (
-                  'Se connecter'
+                  t('login.signIn')
                 )}
               </Button>
             </form>
@@ -146,7 +152,7 @@ const Login: React.FC = () => {
                   <Input
                     id="forgotEmail"
                     type="email"
-                    placeholder="Entrez votre email"
+                    placeholder={t('login.enterEmail')}
                     value={forgotPasswordEmail}
                     onChange={(e) => setForgotPasswordEmail(e.target.value)}
                     className="pl-10"
@@ -156,7 +162,7 @@ const Login: React.FC = () => {
               </div>
 
               <div className="text-sm text-gray-600">
-                Entrez votre adresse email et nous vous enverrons un lien pour réinitialiser votre mot de passe.
+                {t('login.forgotPasswordDescription')}
               </div>
 
               <Button
@@ -167,10 +173,10 @@ const Login: React.FC = () => {
                 {isSendingReset ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Envoi en cours...
+                    {t('login.sending')}
                   </>
                 ) : (
-                  'Envoyer le lien de réinitialisation'
+                  t('login.sendResetLink')
                 )}
               </Button>
 
@@ -183,7 +189,7 @@ const Login: React.FC = () => {
                   setForgotPasswordEmail('');
                 }}
               >
-                Retour à la connexion
+                {t('login.backToLogin')}
               </Button>
             </form>
           )}
@@ -196,14 +202,14 @@ const Login: React.FC = () => {
                 onClick={() => setShowForgotPassword(true)}
                 className="text-blue-600 hover:text-blue-800 underline"
               >
-                Mot de passe oublié ?
+                {t('login.forgotPasswordTitle')}
               </button>
             </div>
           )}
           <div className="text-sm text-center text-gray-500">
-            Pas encore de compte ?{' '}
+            {t('login.noAccount')}{' '}
             <a href="#" className="text-blue-600 hover:text-blue-800">
-              Contactez-nous
+              {t('login.contactUs')}
             </a>
           </div>
         </CardFooter>

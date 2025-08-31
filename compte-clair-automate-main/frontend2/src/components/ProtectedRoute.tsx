@@ -44,7 +44,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowedRoles 
     switch (role) {
       case 'admin':
         return isAdmin;
-      case 'comptable':
+      case 'accountant':
         return isComptable;
       default:
         return false;

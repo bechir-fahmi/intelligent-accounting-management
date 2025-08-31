@@ -9,6 +9,7 @@
  */
 
 import React, { useState, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -42,6 +43,7 @@ import {
 } from "lucide-react";
 
 const BilanGeneration: React.FC = () => {
+  const { t } = useTranslation();
   useAuth();
 
   // State management
@@ -162,11 +164,11 @@ const BilanGeneration: React.FC = () => {
       setBilanReport(report);
       setCurrentStep("results");
 
-      toast.success("Bilan généré avec succès !");
+      toast.success(t('bilan.generatedSuccess'));
     } catch (error: any) {
       console.error("Error generating bilan:", error);
-      setError(error.message || "Erreur lors de la génération du bilan");
-      toast.error("Erreur lors de la génération du bilan");
+      setError(error.message || t('bilan.generationError'));
+      toast.error(t('bilan.generationError'));
     } finally {
       setIsGenerating(false);
     }
@@ -192,11 +194,11 @@ const BilanGeneration: React.FC = () => {
   };
 
   const handleExportPDF = () => {
-    toast.error("Export PDF non encore implémenté");
+    toast.error(t('bilan.pdfExportNotImplemented'));
   };
 
   const handleExportExcel = () => {
-    toast.error("Export Excel non encore implémenté");
+    toast.error(t('bilan.excelExportNotImplemented'));
   };
 
   const handlePrint = () => {
@@ -204,7 +206,7 @@ const BilanGeneration: React.FC = () => {
   };
 
   const handleShare = () => {
-    toast.error("Partage non encore implémenté");
+    toast.error(t('bilan.shareNotImplemented'));
   };
 
   const handleDocumentClick = (documentId: string) => {
@@ -258,10 +260,10 @@ const BilanGeneration: React.FC = () => {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 {[
-                  { key: "selection", label: "Sélection des documents" },
-                  { key: "configuration", label: "Configuration" },
-                  { key: "generation", label: "Génération" },
-                  { key: "results", label: "Résultats" },
+                  { key: "selection", label: t('bilan.documentSelection') },
+                  { key: "configuration", label: t('bilan.configuration') },
+                  { key: "generation", label: t('bilan.generation') },
+                  { key: "results", label: t('bilan.results') },
                 ].map((step, index) => {
                   const Icon = getStepIcon(step.key);
                   const status = getStepStatus(step.key);

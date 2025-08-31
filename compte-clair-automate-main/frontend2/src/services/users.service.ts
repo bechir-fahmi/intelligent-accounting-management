@@ -1,14 +1,13 @@
 import { api } from '@/lib/api';
 import { User } from '@/types/user';
 
-export type UserRole = 'admin' | 'accountant' | 'finance' | 'finance_director' | 'comptable';
+export type UserRole = 'admin' | 'accountant' | 'finance' | 'finance_director';
 
 export const USER_ROLES = [
   { label: 'Admin', value: 'admin' },
   { label: 'Accountant', value: 'accountant' },
   { label: 'Finance', value: 'finance' },
-  { label: 'Finance Director', value: 'finance_director' },
-  { label: 'Comptable', value: 'comptable' }
+  { label: 'Finance Director', value: 'finance_director' }
 ] as const;
 
 export interface CreateUserDto {

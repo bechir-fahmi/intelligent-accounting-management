@@ -255,6 +255,17 @@ class DocumentsService {
     return response.data;
   }
 
+  async setDocumentPublic(id: string, isPublic: boolean): Promise<{
+    success: boolean;
+    message: string;
+    isPublic: boolean;
+  }> {
+    const response = await api.patch(`/documents/${id}/public`, {
+      isPublic,
+    });
+    return response.data;
+  }
+
   // Bilan generation
   async generateBilan(documentIds: string[], periodDays: number): Promise<any> {
     console.log('🚀 Frontend: Calling backend API with:', { documentIds, periodDays });
