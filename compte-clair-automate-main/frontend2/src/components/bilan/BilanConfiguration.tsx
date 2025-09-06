@@ -167,6 +167,15 @@ const BilanConfiguration: React.FC<BilanConfigurationProps> = ({
                     : "hover:bg-gray-50"
                 }`}
                 onClick={() => handleIncludeTypeToggle(type.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleIncludeTypeToggle(type.value);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-pressed={config.includeTypes.includes(type.value)}
               >
                 <input
                   type="checkbox"
@@ -222,9 +231,9 @@ const BilanConfiguration: React.FC<BilanConfigurationProps> = ({
         {/* Validation Messages */}
         {validationMessages.length > 0 && (
           <div className="space-y-2">
-            {validationMessages.map((msg, index) => (
+            {validationMessages.map((msg) => (
               <div
-                key={index}
+                key={`${msg.type}-${msg.message}`}
                 className={`flex items-center space-x-2 p-3 rounded-md ${getMessageClassName(msg.type)}`}
               >
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
