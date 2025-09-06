@@ -82,23 +82,9 @@ export class DocumentsService {
           }
         }
       } catch (err) {
-        console.error('Error calling AI model API:', err.message);
+        // Error calling AI model API
       }
       // Create document entity
-      console.log('📝 Creating document entity...');
-      console.log('- File info:', {
-        originalname: file.originalname,
-        mimetype: file.mimetype,
-        size: file.size
-      });
-      console.log('- AI results:', {
-        modelPrediction,
-        finalPrediction,
-        modelConfidence,
-        textExcerptLength: textExcerpt?.length || 0,
-        embeddingLength: documentEmbedding?.length || 0,
-        extractedInfo
-      });
 
       const document = this.documentsRepository.create({
         ...createDocumentDto,
@@ -126,23 +112,15 @@ export class DocumentsService {
         // Remove aiRawResponse from entity, but log it for debugging
       });
 
-      console.log('✅ Document entity created successfully');
-      if (aiRawResponse) {
-        console.log('✅ AI Model API processing completed successfully');
-      }
 
-      console.log('💾 Attempting to save document to database...');
 
       try {
         const savedDocument = await this.documentsRepository.save(document);
-        console.log('✅ Document saved successfully with ID:', savedDocument.id);
         return savedDocument;
       } catch (saveError) {
-        console.error('❌ Error saving document to database:', saveError);
         throw saveError;
       }
     } catch (error) {
-      console.error('Error creating document:', error);
       throw error;
     }
   }
@@ -312,7 +290,7 @@ export class DocumentsService {
       try {
         await this.cloudinaryService.deleteFile(document.cloudinaryPublicId);
       } catch (error) {
-        console.error(`Error deleting file from Cloudinary: ${error.message}`);
+        // Error deleting file from Cloudinary
       }
     }
 
@@ -381,7 +359,6 @@ export class DocumentsService {
         },
       };
     } catch (error) {
-      console.error('Error searching documents:', error);
       return {
         data: [],
         pagination: {
@@ -513,7 +490,6 @@ export class DocumentsService {
         },
       };
     } catch (error) {
-      console.error('Error in advanced search:', error);
       return {
         data: [],
         pagination: {
@@ -577,7 +553,6 @@ export class DocumentsService {
       const queryEmbedding = await this.embeddingService.generateQueryEmbedding(query);
 
       if (!queryEmbedding) {
-        console.log('⚠️ No embedding generated, returning empty results');
         return {
           data: [],
           pagination: {
@@ -646,7 +621,7 @@ export class DocumentsService {
         .orderBy('similarity', 'DESC')
         .limit(maxResults);
 
-      console.log(`🔍 Semantic search: query="${query}", threshold=${similarityThreshold}, maxResults=${maxResults}`);
+
 
       // Get results with similarity scores
       const rawResults = await queryBuilder.getRawAndEntities();
@@ -680,7 +655,6 @@ export class DocumentsService {
         },
       };
     } catch (error) {
-      console.error('Error in semantic search:', error);
       return {
         data: [],
         pagination: {
@@ -729,7 +703,6 @@ export class DocumentsService {
         },
       };
     } catch (error) {
-      console.error('Error in hybrid search:', error);
       return {
         data: [],
         pagination: {
@@ -845,7 +818,7 @@ export class DocumentsService {
       const hasNext = page < totalPages;
       const hasPrev = page > 1;
 
-      console.log(`🎯 Smart search: clientName="${clientName}", year=${year}, query="${query}", results=${resultsWithDetails.length}`);
+
 
       return {
         data: resultsWithDetails,
@@ -859,7 +832,6 @@ export class DocumentsService {
         },
       };
     } catch (error) {
-      console.error('Error in smart search:', error);
       return {
         data: [],
         pagination: {
@@ -896,31 +868,22 @@ export class DocumentsService {
         throw new Error('No accessible documents found with the provided IDs');
       }
 
-      console.log(`📊 Found ${documents.length} accessible documents out of ${documentIds.length} requested`);
-
       // Log which documents were found vs requested
       const foundIds = documents.map(d => d.id);
       const missingIds = documentIds.filter(id => !foundIds.includes(id));
-      if (missingIds.length > 0) {
-        console.warn(`⚠️ Missing documents: ${missingIds.join(', ')}`);
-      }
 
       // Validate that we have some financial documents
       const financialTypes = ['invoice', 'receipt', 'purchase_order', 'bank_statement', 'payslip', 'expense_report'];
       const hasFinancialDocs = documents.some(doc => financialTypes.includes(doc.type));
 
-      if (!hasFinancialDocs) {
-        console.warn('⚠️ No financial documents found in selection, bilan may be incomplete');
-      }
+
 
       // Transform documents to send only Cloudinary URLs to the external API
       const documentsData = documents.map(doc => {
         // Get the Cloudinary URL - use secure URL if available, otherwise regular URL
         const cloudinaryUrl = doc.cloudinarySecureUrl || doc.cloudinaryUrl;
-        
-        if (!cloudinaryUrl) {
-          console.warn(`⚠️ Document ${doc.id} (${doc.originalName}) has no Cloudinary URL`);
-        }
+
+
 
         const transformedDoc = {
           id: doc.id,
@@ -930,14 +893,12 @@ export class DocumentsService {
           created_at: doc.createdAt.toISOString()
         };
 
-        console.log(`🔍 Transformed document ${doc.id}:`, transformedDoc);
+
 
         return transformedDoc;
       });
 
-      console.log(`📊 Generating bilan for ${documents.length} documents for user ${user.id}`);
-      console.log('Document types:', documents.map(d => d.type).join(', '));
-      console.log('Cloudinary URLs:', documents.map(d => d.cloudinarySecureUrl || d.cloudinaryUrl || 'NO_URL').join(', '));
+
 
       // Prepare the payload for the external API
       const payload = {
@@ -945,11 +906,10 @@ export class DocumentsService {
         period_days: periodDays
       };
 
-      console.log('🔄 Sending bilan request to external API:');
-      console.log('📤 Payload:', JSON.stringify(payload, null, 2));
 
-      // Call the external bilan API
-      const response = await axios.post('http://127.0.0.1:8000/bilan', payload, {
+
+      // Call the external bilan API v2
+      const response = await axios.post('http://127.0.0.1:8000/financial/v2/bilan', payload, {
         headers: {
           'Content-Type': 'application/json',
         },
@@ -961,65 +921,71 @@ export class DocumentsService {
       console.log('=====================================');
       console.log(JSON.stringify(response.data, null, 2));
       console.log('=====================================');
-      
-      // Log specific sections to analyze number formats
-      if (response.data.compte_de_resultat) {
-        console.log('💰 RAW Compte de Résultat values:');
-        console.log(`  - resultat_exploitation: ${response.data.compte_de_resultat.resultat_exploitation} (type: ${typeof response.data.compte_de_resultat.resultat_exploitation})`);
-        console.log(`  - resultat_avant_impot: ${response.data.compte_de_resultat.resultat_avant_impot} (type: ${typeof response.data.compte_de_resultat.resultat_avant_impot})`);
-        console.log(`  - resultat_net: ${response.data.compte_de_resultat.resultat_net} (type: ${typeof response.data.compte_de_resultat.resultat_net})`);
+
+      // Log specific sections from v2 API response
+      if (response.data.actifs) {
+        console.log('💰 RAW Actifs values:');
+        if (response.data.actifs.total_actifs) {
+          console.log(`  - total_actifs 2021: ${response.data.actifs.total_actifs['2021']} (type: ${typeof response.data.actifs.total_actifs['2021']})`);
+          console.log(`  - total_actifs 2020: ${response.data.actifs.total_actifs['2020']} (type: ${typeof response.data.actifs.total_actifs['2020']})`);
+        }
       }
-      
-      if (response.data.bilan_comptable) {
-        console.log('🏦 RAW Bilan Comptable values:');
-        console.log(`  - total_actif: ${response.data.bilan_comptable.total_actif} (type: ${typeof response.data.bilan_comptable.total_actif})`);
-        console.log(`  - total_passif: ${response.data.bilan_comptable.total_passif} (type: ${typeof response.data.bilan_comptable.total_passif})`);
+
+      if (response.data.capitaux_propres_et_passifs) {
+        console.log('🏦 RAW Capitaux propres et passifs values:');
+        if (response.data.capitaux_propres_et_passifs.capitaux_propres?.resultat_exercice) {
+          console.log(`  - resultat_exercice 2021: ${response.data.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2021']} (type: ${typeof response.data.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2021']})`);
+          console.log(`  - resultat_exercice 2020: ${response.data.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2020']} (type: ${typeof response.data.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2020']})`);
+        }
       }
-      
-      if (response.data.details_transactions && Array.isArray(response.data.details_transactions)) {
-        console.log('📋 RAW Transaction amounts (first 3):');
-        response.data.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
-          console.log(`  - Transaction ${index + 1}: montant=${transaction.montant} (type: ${typeof transaction.montant}) - ${transaction.libelle}`);
-        });
-      }
-      
+
+
       if (response.data.analyse_financiere) {
         console.log('📊 RAW Financial Analysis:');
         console.log('  - Points forts:', response.data.analyse_financiere.points_forts);
         console.log('  - Points faibles:', response.data.analyse_financiere.points_faibles);
         console.log('  - Recommandations:', response.data.analyse_financiere.recommandations);
       }
-      
+
+      if (response.data.ratios_financiers) {
+        console.log('📈 RAW Financial Ratios:');
+        console.log(`  - liquidite_generale: ${response.data.ratios_financiers.liquidite_generale} (type: ${typeof response.data.ratios_financiers.liquidite_generale})`);
+        console.log(`  - autonomie_financiere_percent: ${response.data.ratios_financiers.autonomie_financiere_percent} (type: ${typeof response.data.ratios_financiers.autonomie_financiere_percent})`);
+      }
+
       // Process the response to handle number formatting issues
       const processedBilanData = this.processBilanNumbers(response.data);
-      
+
       console.log('🔄 AFTER PROCESSING:');
       console.log('=====================================');
-      
+
       // Log the same sections after processing
-      if (processedBilanData.compte_de_resultat) {
-        console.log('💰 PROCESSED Compte de Résultat values:');
-        console.log(`  - resultat_exploitation: ${processedBilanData.compte_de_resultat.resultat_exploitation} (type: ${typeof processedBilanData.compte_de_resultat.resultat_exploitation})`);
-        console.log(`  - resultat_avant_impot: ${processedBilanData.compte_de_resultat.resultat_avant_impot} (type: ${typeof processedBilanData.compte_de_resultat.resultat_avant_impot})`);
-        console.log(`  - resultat_net: ${processedBilanData.compte_de_resultat.resultat_net} (type: ${typeof processedBilanData.compte_de_resultat.resultat_net})`);
+      if (processedBilanData.actifs) {
+        console.log('💰 PROCESSED Actifs values:');
+        if (processedBilanData.actifs.total_actifs) {
+          console.log(`  - total_actifs 2021: ${processedBilanData.actifs.total_actifs['2021']} (type: ${typeof processedBilanData.actifs.total_actifs['2021']})`);
+          console.log(`  - total_actifs 2020: ${processedBilanData.actifs.total_actifs['2020']} (type: ${typeof processedBilanData.actifs.total_actifs['2020']})`);
+        }
       }
-      
-      if (processedBilanData.details_transactions && Array.isArray(processedBilanData.details_transactions)) {
-        console.log('📋 PROCESSED Transaction amounts (first 3):');
-        processedBilanData.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
-          console.log(`  - Transaction ${index + 1}: montant=${transaction.montant} (type: ${typeof transaction.montant}) - ${transaction.libelle}`);
-        });
+
+      if (processedBilanData.capitaux_propres_et_passifs) {
+        console.log('🏦 PROCESSED Capitaux propres et passifs values:');
+        if (processedBilanData.capitaux_propres_et_passifs.capitaux_propres?.resultat_exercice) {
+          console.log(`  - resultat_exercice 2021: ${processedBilanData.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2021']} (type: ${typeof processedBilanData.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2021']})`);
+          console.log(`  - resultat_exercice 2020: ${processedBilanData.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2020']} (type: ${typeof processedBilanData.capitaux_propres_et_passifs.capitaux_propres.resultat_exercice['2020']})`);
+        }
       }
-      
+
+
       if (processedBilanData.analyse_financiere) {
         console.log('📊 PROCESSED Financial Analysis:');
         console.log('  - Points forts:', processedBilanData.analyse_financiere.points_forts);
         console.log('  - Points faibles:', processedBilanData.analyse_financiere.points_faibles);
         console.log('  - Recommandations:', processedBilanData.analyse_financiere.recommandations);
       }
-      
+
       console.log('=====================================');
-      
+
       return processedBilanData;
     } catch (error) {
       console.error('❌ Error generating bilan report:', error);
@@ -1041,140 +1007,53 @@ export class DocumentsService {
   }
 
   /**
-   * Process bilan response to handle Tunisian currency formatting
-   * The external API returns amounts in millimes and uses European decimal notation (comma as decimal separator)
-   * Examples:
-   * - "7,735" = 7.735 dinars (7 dinars and 735 millimes)
-   * - 23365 = 23.365 dinars (23 dinars and 365 millimes)
-   * - "280,250" = 280.250 dinars
+   * Process bilan response from v2 API to handle the new structure
+   * The v2 API returns a structured balance sheet with actifs, capitaux_propres_et_passifs, etc.
+   * Numbers are already in proper format (no conversion needed from millimes)
    */
   private processBilanNumbers(bilanData: any): any {
     if (!bilanData || typeof bilanData !== 'object') {
       return bilanData;
     }
 
-    const processValue = (value: any, path: string = ''): any => {
-      // Handle string numbers with European decimal notation (comma as decimal separator)
-      if (typeof value === 'string') {
-        // Pattern for European decimal notation: "18,000" "231,109" "23,365" "51,94"
-        const europeanDecimalPattern = /^-?\d+,\d+$/;
-        if (europeanDecimalPattern.test(value)) {
-          // Replace comma with dot for proper decimal parsing
-          const numericValue = parseFloat(value.replace(',', '.'));
-          console.log(`🔢 [${path}] European decimal string: "${value}" → ${numericValue} dinars`);
-          return numericValue;
-        }
-        
-        // Pattern for regular numbers as strings: "1500" or "-500"
-        const numberPattern = /^-?\d+$/;
-        if (numberPattern.test(value)) {
-          const numericValue = parseFloat(value);
-          console.log(`🔢 [${path}] String integer: "${value}" → ${numericValue}`);
-          return numericValue;
-        }
-        
-        // Pattern for decimal numbers as strings: "7.735" or "-280.250"
-        const decimalPattern = /^-?\d+\.\d+$/;
-        if (decimalPattern.test(value)) {
-          const numericValue = parseFloat(value);
-          console.log(`🔢 [${path}] Decimal string: "${value}" → ${numericValue}`);
-          return numericValue;
-        }
-        
-        // For all other strings (like French text), keep as is
-        // Don't process strings that contain French words or are clearly text content
-        const isFrenchText = /[a-zA-ZÀ-ÿ\s]/.test(value) && value.length > 10;
-        if (isFrenchText || path.includes('analyse_financiere') || path.includes('libelle')) {
-          console.log(`📝 [${path}] Text content: "${value.substring(0, 50)}..." (keeping as is)`);
-        }
-        return value;
-      }
-      
-      // Handle numeric values
-      if (typeof value === 'number') {
-        // The external API is inconsistent:
-        // - Sometimes sends proper decimals: 161, 51.94
-        // - Sometimes sends integers that should be decimals: 18000 (should be 18.000), 231109 (should be 231.109)
-        
-        if (Number.isInteger(value)) {
-          // Analyze the context and value to determine if conversion is needed
-          
-          // Small whole numbers (< 1000) are likely already in dinars
-          if (Math.abs(value) < 1000) {
-            console.log(`🔢 [${path}] Small integer: ${value} (keeping as dinars)`);
-            return value;
-          }
-          
-          // For larger integers, we need to determine if they represent millimes
-          // Based on your examples:
-          // - 18000 should be 18.000 dinars
-          // - 231109 should be 231.109 dinars  
-          // - 23365 should be 23.365 dinars
-          
-          // Check if the number makes sense when divided by 1000
-          const potentialDinars = value / 1000;
-          
-          // If the result is a reasonable dinar amount (not too small), convert it
-          if (potentialDinars >= 1) {
-            console.log(`🔢 [${path}] Large integer: ${value} → ${potentialDinars} dinars (converted from millimes)`);
-            return potentialDinars;
-          } else {
-            // Very small amounts, keep as is
-            console.log(`🔢 [${path}] Small amount: ${value} (keeping as is)`);
-            return value;
-          }
-        } else {
-          // Already a decimal number, keep as is
-          console.log(`🔢 [${path}] Decimal number: ${value} (keeping as dinars)`);
-          return value;
-        }
-      }
-      
-      // If it's an object, recursively process it
-      if (typeof value === 'object' && value !== null) {
-        if (Array.isArray(value)) {
-          return value.map((item, index) => processValue(item, `${path}[${index}]`));
-        } else {
-          const processedObj: any = {};
-          for (const [key, val] of Object.entries(value)) {
-            const newPath = path ? `${path}.${key}` : key;
-            processedObj[key] = processValue(val, newPath);
-          }
-          return processedObj;
-        }
-      }
-      
-      // For all other types, return as is
-      return value;
-    };
+    console.log('🔄 Processing v2 bilan response...');
 
-    console.log('🔄 Starting number processing...');
-    const processedData = processValue(bilanData, 'root');
-    
-    console.log('🔄 Processed bilan numbers - converted European decimal notation to standard decimals');
-    
-    // Log some key financial values to verify conversion
-    if (processedData.compte_de_resultat) {
-      console.log('💰 Key financial values after processing (in dinars):');
-      console.log(`  - Résultat d'exploitation: ${processedData.compte_de_resultat.resultat_exploitation} DT`);
-      console.log(`  - Résultat avant impôt: ${processedData.compte_de_resultat.resultat_avant_impot} DT`);
-      console.log(`  - Résultat net: ${processedData.compte_de_resultat.resultat_net} DT`);
-    }
-    
-    if (processedData.bilan_comptable) {
-      console.log(`  - Total actif: ${processedData.bilan_comptable.total_actif} DT`);
-      console.log(`  - Total passif: ${processedData.bilan_comptable.total_passif} DT`);
+    // The v2 API returns data in a structured format, no number conversion needed
+    // Just validate and log the structure
+
+    if (bilanData.date) {
+      console.log('📅 Date information:', bilanData.date);
     }
 
-    // Log transaction details to verify amounts
-    if (processedData.details_transactions && Array.isArray(processedData.details_transactions)) {
-      console.log('📋 Transaction amounts after processing:');
-      processedData.details_transactions.slice(0, 3).forEach((transaction: any, index: number) => {
-        console.log(`  - Transaction ${index + 1}: ${transaction.montant} DT (${transaction.libelle})`);
-      });
+    if (bilanData.actifs) {
+      console.log('💰 Actifs structure found');
+      if (bilanData.actifs.total_actifs) {
+        console.log(`  - Total actifs 2021: ${bilanData.actifs.total_actifs['2021']} DT`);
+        console.log(`  - Total actifs 2020: ${bilanData.actifs.total_actifs['2020']} DT`);
+      }
     }
 
-    return processedData;
+    if (bilanData.capitaux_propres_et_passifs) {
+      console.log('🏦 Capitaux propres et passifs structure found');
+      if (bilanData.capitaux_propres_et_passifs.total_capitaux_propres_et_passifs) {
+        console.log(`  - Total capitaux propres et passifs 2021: ${bilanData.capitaux_propres_et_passifs.total_capitaux_propres_et_passifs['2021']} DT`);
+        console.log(`  - Total capitaux propres et passifs 2020: ${bilanData.capitaux_propres_et_passifs.total_capitaux_propres_et_passifs['2020']} DT`);
+      }
+    }
+
+    if (bilanData.analyse_financiere) {
+      console.log('📊 Financial analysis found:');
+      console.log('  - Points forts:', bilanData.analyse_financiere.points_forts);
+      console.log('  - Points faibles:', bilanData.analyse_financiere.points_faibles);
+      console.log('  - Recommandations:', bilanData.analyse_financiere.recommandations);
+    }
+
+    if (bilanData.ratios_financiers) {
+      console.log('📈 Financial ratios found');
+    }
+
+    // Return the data as-is since v2 API provides properly formatted numbers
+    return bilanData;
   }
 
   // Simple semantic search: Uses embeddings to search by client name or date

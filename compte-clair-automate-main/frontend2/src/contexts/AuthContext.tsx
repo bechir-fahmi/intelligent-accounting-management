@@ -94,9 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       setIsAuthenticated(false);
       
-      // Clear any stored tokens or session data
-      localStorage.removeItem('token');
-      sessionStorage.removeItem('token');
+      // Cookies will be cleared by the logout API call
       
       // Call logout API (don't wait for it to complete)
       api.post('/auth/logout').catch(error => {

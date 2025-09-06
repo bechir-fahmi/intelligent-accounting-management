@@ -20,7 +20,6 @@ import Footer from "@/components/Footer";
 import DocumentSelector from "@/components/bilan/DocumentSelector";
 import BilanConfiguration from "@/components/bilan/BilanConfiguration";
 import BilanReport from "@/components/bilan/BilanReport";
-import TransactionDetails from "@/components/bilan/TransactionDetails";
 import {
   BilanConfig,
   BilanReport as BilanReportType,
@@ -53,7 +52,7 @@ const BilanGeneration: React.FC = () => {
   const [selectedDocuments, setSelectedDocuments] = useState<string[]>([]);
   const [documents, setDocuments] = useState<Document[]>([]);
   const [config, setConfig] = useState<BilanConfig>({
-    periodDays: 90,
+    periodDays: 365,
     includeTypes: [
       "invoice",
       "receipt",
@@ -178,7 +177,7 @@ const BilanGeneration: React.FC = () => {
     setCurrentStep("selection");
     setSelectedDocuments([]);
     setConfig({
-      periodDays: 90,
+      periodDays: 365,
       includeTypes: [
         "invoice",
         "receipt",
@@ -209,10 +208,7 @@ const BilanGeneration: React.FC = () => {
     toast.error(t('bilan.shareNotImplemented'));
   };
 
-  const handleDocumentClick = (documentId: string) => {
-    // Navigate to document details (implement based on your routing)
-    toast(`Navigation vers le document ${documentId}`);
-  };
+
 
   const getStepIcon = (step: string) => {
     switch (step) {
@@ -492,10 +488,7 @@ const BilanGeneration: React.FC = () => {
                 onShare={handleShare}
               />
 
-              <TransactionDetails
-                transactions={bilanReport.details_transactions}
-                onDocumentClick={handleDocumentClick}
-              />
+
             </div>
           )}
         </div>

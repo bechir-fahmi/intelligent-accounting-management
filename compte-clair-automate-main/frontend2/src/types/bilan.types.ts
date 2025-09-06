@@ -12,10 +12,6 @@
 export interface BilanConfig {
   periodDays: number;
   includeTypes: string[];
-  customDateRange?: {
-    from: string;
-    to: string;
-  };
 }
 
 export interface BilanGenerationRequest {
@@ -135,10 +131,8 @@ export interface BilanMetadata {
 
 export interface BilanReport {
   bilan_comptable: BilanComptable;
-  compte_de_resultat: CompteDeResultat;
   ratios_financiers: RatiosFinanciers;
   analyse_financiere: AnalyseFinanciere;
-  details_transactions: DetailTransaction[];
   metadata: BilanMetadata;
 }
 
