@@ -97,6 +97,16 @@ const BilanConfiguration: React.FC<BilanConfigurationProps> = ({
     return messages;
   };
 
+  const getMessageClassName = (type: string) => {
+    if (type === "error") {
+      return "bg-red-50 text-red-700 border border-red-200";
+    }
+    if (type === "warning") {
+      return "bg-yellow-50 text-yellow-700 border border-yellow-200";
+    }
+    return "bg-green-50 text-green-700 border border-green-200";
+  };
+
   const validationMessages = getValidationMessages();
 
   return (
@@ -215,13 +225,7 @@ const BilanConfiguration: React.FC<BilanConfigurationProps> = ({
             {validationMessages.map((msg, index) => (
               <div
                 key={index}
-                className={`flex items-center space-x-2 p-3 rounded-md ${
-                  msg.type === "error"
-                    ? "bg-red-50 text-red-700 border border-red-200"
-                    : msg.type === "warning"
-                    ? "bg-yellow-50 text-yellow-700 border border-yellow-200"
-                    : "bg-green-50 text-green-700 border border-green-200"
-                }`}
+                className={`flex items-center space-x-2 p-3 rounded-md ${getMessageClassName(msg.type)}`}
               >
                 <AlertTriangle className="h-4 w-4 flex-shrink-0" />
                 <span className="text-sm">{msg.message}</span>

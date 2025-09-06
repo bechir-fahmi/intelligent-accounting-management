@@ -12,7 +12,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { BilanReport as BilanReportType } from "@/types/bilan.types";
+
 import { bilanService } from "@/services/bilan.service";
 import {
   FileText,
@@ -50,14 +50,6 @@ const BilanReport: React.FC<BilanReportProps> = ({
   const formatPercentage = (value: number) =>
     bilanService.formatPercentage(value || 0);
 
-  // Helper function to safely get nested values
-  const safeGet = (obj: any, path: string, defaultValue: any = 0): any => {
-    return (
-      path.split(".").reduce((current, key) => current?.[key], obj) ??
-      defaultValue
-    );
-  };
-
   // Safety checks for report structure
   if (!report || !report.actifs || !report.capitaux_propres_et_passifs) {
     return (
@@ -87,25 +79,37 @@ const BilanReport: React.FC<BilanReportProps> = ({
 
   // Get available years from the data and sort them (most recent first)
   const availableYearKeys = Object.keys(report.date || {}).sort((a, b) => {
-    const yearA = parseInt(a.split('-')[0]);
-    const yearB = parseInt(b.split('-')[0]);
+    const yearA = parseInt(a.split("-")[0]);
+    const yearB = parseInt(b.split("-")[0]);
     return yearB - yearA; // Sort descending (most recent first)
   });
-  
+
   // Extract just the year part for data access
-  const currentYear = availableYearKeys[0] ? availableYearKeys[0].split('-')[0] : "2025";
-  const previousYear = availableYearKeys[1] ? availableYearKeys[1].split('-')[0] : "2024";
-  
+  const currentYear = availableYearKeys[0]
+    ? availableYearKeys[0].split("-")[0]
+    : "2025";
+  const previousYear = availableYearKeys[1]
+    ? availableYearKeys[1].split("-")[0]
+    : "2024";
+
   // Keep full keys for display purposes
   const currentYearDisplay = availableYearKeys[0] || "2025-12-31";
   const previousYearDisplay = availableYearKeys[1] || "2024-12-31";
 
   // Debug logging
-  console.log('Available year keys:', availableYearKeys);
-  console.log('Current year for data access:', currentYear);
-  console.log('Previous year for data access:', previousYear);
-  console.log('Sample data check - clients_et_comptes_rattaches:', report.actifs?.actifs_courants?.clients_et_comptes_rattaches?.net);
-  console.log('Sample value for 2025:', report.actifs?.actifs_courants?.clients_et_comptes_rattaches?.net?.[currentYear]);
+  console.log("Available year keys:", availableYearKeys);
+  console.log("Current year for data access:", currentYear);
+  console.log("Previous year for data access:", previousYear);
+  console.log(
+    "Sample data check - clients_et_comptes_rattaches:",
+    report.actifs?.actifs_courants?.clients_et_comptes_rattaches?.net
+  );
+  console.log(
+    "Sample value for 2025:",
+    report.actifs?.actifs_courants?.clients_et_comptes_rattaches?.net?.[
+      currentYear
+    ]
+  );
 
   const isBalanced =
     Math.abs(
@@ -114,89 +118,93 @@ const BilanReport: React.FC<BilanReportProps> = ({
           ?.total_capitaux_propres_et_passifs?.[currentYear] || 0)
     ) < 0.01;
 
+  const renderReportHeader = () => (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div>
+            <CardTitle className="flex items-center space-x-2">
+              <FileText className="h-6 w-6" />
+              <span>Bilan Comptable</span>
+            </CardTitle>
+            <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
+              <div className="flex items-center space-x-1">
+                <Calendar className="h-4 w-4" />
+                <span>
+                  Généré le{" "}
+                  {format(new Date(), "dd/MM/yyyy à HH:mm", { locale: fr })}
+                </span>
+              </div>
+              <div className="flex items-center space-x-1">
+                <Clock className="h-4 w-4" />
+                <span>
+                  Exercices: {report.date?.[currentYearDisplay]} vs{" "}
+                  {report.date?.[previousYearDisplay]}
+                </span>
+              </div>
+              <Badge variant="outline">Comparaison sur 2 exercices</Badge>
+            </div>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" size="sm" onClick={onPrint}>
+              <Printer className="h-4 w-4 mr-2" />
+              Imprimer
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExportExcel}>
+              <Download className="h-4 w-4 mr-2" />
+              Excel
+            </Button>
+            <Button variant="outline" size="sm" onClick={onExportPDF}>
+              <Download className="h-4 w-4 mr-2" />
+              PDF
+            </Button>
+            <Button variant="outline" size="sm" onClick={onShare}>
+              <Share2 className="h-4 w-4 mr-2" />
+              Partager
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+    </Card>
+  );
+
+  const renderBalanceVerification = () => (
+    <Card>
+      <CardContent className="p-4">
+        <div
+          className={`flex items-center space-x-2 ${
+            isBalanced ? "text-green-600" : "text-red-600"
+          }`}
+        >
+          {isBalanced ? (
+            <CheckCircle2 className="h-5 w-5" />
+          ) : (
+            <AlertCircle className="h-5 w-5" />
+          )}
+          <span className="font-medium">
+            {isBalanced
+              ? "Bilan équilibré - Actif = Passif"
+              : "Attention: Déséquilibre détecté dans le bilan"}
+          </span>
+          <Badge variant={isBalanced ? "default" : "destructive"}>
+            Écart:{" "}
+            {formatCurrency(
+              Math.abs(
+                (report.actifs?.total_actifs?.[currentYear] || 0) -
+                  (report.capitaux_propres_et_passifs
+                    ?.total_capitaux_propres_et_passifs?.[currentYear] || 0)
+              )
+            )}
+          </Badge>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="space-y-6">
-      {/* Report Header */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center space-x-2">
-                <FileText className="h-6 w-6" />
-                <span>Bilan Comptable</span>
-              </CardTitle>
-              <div className="flex items-center space-x-4 mt-2 text-sm text-gray-600">
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>
-                    Généré le{" "}
-                    {format(new Date(), "dd/MM/yyyy à HH:mm", { locale: fr })}
-                  </span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>
-                    Exercices: {report.date?.[currentYearDisplay]} vs{" "}
-                    {report.date?.[previousYearDisplay]}
-                  </span>
-                </div>
-                <Badge variant="outline">Comparaison sur 2 exercices</Badge>
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-2">
-              <Button variant="outline" size="sm" onClick={onPrint}>
-                <Printer className="h-4 w-4 mr-2" />
-                Imprimer
-              </Button>
-              <Button variant="outline" size="sm" onClick={onExportExcel}>
-                <Download className="h-4 w-4 mr-2" />
-                Excel
-              </Button>
-              <Button variant="outline" size="sm" onClick={onExportPDF}>
-                <Download className="h-4 w-4 mr-2" />
-                PDF
-              </Button>
-              <Button variant="outline" size="sm" onClick={onShare}>
-                <Share2 className="h-4 w-4 mr-2" />
-                Partager
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-      </Card>
-
-      {/* Balance Verification */}
-      <Card>
-        <CardContent className="p-4">
-          <div
-            className={`flex items-center space-x-2 ${
-              isBalanced ? "text-green-600" : "text-red-600"
-            }`}
-          >
-            {isBalanced ? (
-              <CheckCircle2 className="h-5 w-5" />
-            ) : (
-              <AlertCircle className="h-5 w-5" />
-            )}
-            <span className="font-medium">
-              {isBalanced
-                ? "Bilan équilibré - Actif = Passif"
-                : "Attention: Déséquilibre détecté dans le bilan"}
-            </span>
-            <Badge variant={isBalanced ? "default" : "destructive"}>
-              Écart:{" "}
-              {formatCurrency(
-                Math.abs(
-                  (report.actifs?.total_actifs?.[currentYear] || 0) -
-                    (report.capitaux_propres_et_passifs
-                      ?.total_capitaux_propres_et_passifs?.[currentYear] || 0)
-                )
-              )}
-            </Badge>
-          </div>
-        </CardContent>
-      </Card>
+      {renderReportHeader()}
+      {renderBalanceVerification()}
 
       {/* Balance Sheet */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
