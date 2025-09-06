@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { User } from '@/types/user';
 import { api } from '@/lib/api';
 
@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const response = await api.get('/auth/me');
         console.log('Auth check response:', response.data);
         
-        if (response.data && response.data.id) {
+        if (response.data?.id) {
           console.log('Setting authenticated user:', response.data);
           setUser(response.data);
           setIsAuthenticated(true);
@@ -60,21 +60,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  // Don't render children until auth check is complete
-  if (!isInitialized) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   const login = async (email: string, password: string) => {
     try {
       const response = await api.post('/auth/login', { email, password });
       console.log('Login response:', response.data);
       
-      if (response.data && response.data.user) {
+      if (response.data?.user) {
         setUser(response.data.user);
         setIsAuthenticated(true);
       } else {
@@ -119,8 +110,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const isAdmin = user?.type === 'admin';
   const isComptable = user?.type === 'accountant';
 
+  const contextValue = useMemo(() => ({
+    user,
+    login,
+    logout,
+    updateUser,
+    isAuthenticated,
+    isAdmin,
+    isComptable
+  }), [user, isAuthenticated, isAdmin, isComptable]);
+
+  // Don't render children until auth check is complete
+  if (!isInitialized) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
+
   return (
-    <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated, isAdmin, isComptable }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

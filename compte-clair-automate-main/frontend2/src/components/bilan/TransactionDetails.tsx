@@ -58,7 +58,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
   ];
 
   // Filter and sort transactions
-  const filteredTransactions = (transactions || [])
+  const filteredTransactions = (transactions ?? [])
     .filter(transaction => {
       const matchesSearch = !searchQuery || 
         transaction.libelle.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -92,7 +92,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
 
   const getTypeLabel = (type: string) => {
     const typeInfo = documentTypes.find(t => t.value === type);
-    return typeInfo?.label || type;
+    return typeInfo?.label ?? type;
   };
 
   const getTypeColor = (type: string) => {
@@ -105,7 +105,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
       'payslip': 'bg-indigo-100 text-indigo-800',
       'other': 'bg-gray-100 text-gray-800'
     };
-    return colors[type] || colors['other'];
+    return colors[type] ?? colors['other'];
   };
 
   const handleSort = (field: 'montant' | 'type' | 'libelle') => {
@@ -238,7 +238,7 @@ const TransactionDetails: React.FC<TransactionDetailsProps> = ({
             </TableHeader>
             <TableBody>
               {filteredTransactions.map((transaction, index) => (
-                <TableRow key={index} className="hover:bg-gray-50">
+                <TableRow key={`${transaction.document_id}-${transaction.type}-${index}`} className="hover:bg-gray-50">
                   <TableCell>
                     <div className="flex items-center space-x-2">
                       <FileText className="h-4 w-4 text-gray-400" />

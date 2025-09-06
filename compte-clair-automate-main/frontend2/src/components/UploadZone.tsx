@@ -92,7 +92,7 @@ const UploadZone = ({ onFilesSelected }: UploadZoneProps) => {
           <h3 className="text-lg font-medium">Fichiers sélectionnés ({files.length})</h3>
           <div className="space-y-2">
             {files.map((file, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md">
+              <div key={`${file.name}-${file.size}-${index}`} className="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-md">
                 <div className="flex items-center">
                   <div className="bg-blue-100 p-2 rounded">
                     {file.type.startsWith('application/pdf') ? (

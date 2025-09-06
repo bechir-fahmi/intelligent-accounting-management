@@ -1,8 +1,7 @@
-import React, { useState } from 'react';
-import { Card, CardContent, CardFooter } from '@/components/ui/card';
+import { useState } from 'react';
+import { Card, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Share2, Trash2, Eye, Download } from 'lucide-react';
+import { Share2, Eye } from 'lucide-react';
 import { documentsService } from '@/services/documents.service';
 import { toast } from 'react-hot-toast';
 import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
@@ -28,7 +27,6 @@ interface DocumentCardProps {
   textExcerpt?: string;
   description?: string | null;
   mimeType?: string;
-  hasSharedUsers: boolean;
 }
 
 const DocumentCard = ({
@@ -44,8 +42,7 @@ const DocumentCard = ({
   finalPrediction,
   textExcerpt,
   description,
-  mimeType,
-  hasSharedUsers
+  mimeType
 }: DocumentCardProps) => {
   const [isPdfViewerOpen, setIsPdfViewerOpen] = useState(false);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
@@ -223,17 +220,15 @@ const DocumentCard = ({
                 <span className="font-medium">{finalPrediction}</span>
               </div>
             )}
-{/* 
+
             {textExcerpt && (
               <div className="text-sm">
-                <span className="text-gray-500">Extrait du texte : </span>
-                <p className="font-medium mt-1 bg-gray-50 p-2 rounded text-gray-700">{textExcerpt}</p>
+                <span className="text-gray-500">Extrait : </span>
+                <span className="font-medium">{textExcerpt}</span>
               </div>
-            )} */}
-
-          
-          </div>
+            )}
         </div>
+      </div>
       
       <CardFooter className="flex justify-between bg-gray-50 py-2 px-4">
         <div className="flex items-center space-x-1">
@@ -276,7 +271,7 @@ const DocumentCard = ({
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => window.open(pdfUrl, '_blank')}
+                  onClick={() => pdfUrl && window.open(pdfUrl, '_blank')}
                 >
                   Ouvrir dans un nouvel onglet
                 </Button>
@@ -298,7 +293,7 @@ const DocumentCard = ({
                         <p className="text-red-500 mb-2">Erreur lors du chargement du PDF</p>
                         <Button
                           variant="link"
-                          onClick={() => window.open(pdfUrl, '_blank')}
+                          onClick={() => pdfUrl && window.open(pdfUrl, '_blank')}
                         >
                           Ouvrir dans un nouvel onglet
                         </Button>

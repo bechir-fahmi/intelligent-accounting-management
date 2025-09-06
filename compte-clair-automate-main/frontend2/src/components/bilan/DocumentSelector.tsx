@@ -17,7 +17,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Pagination, PaginationContent, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from '@/components/ui/pagination';
 import { Document, documentsService } from '@/services/documents.service';
-import { Search, FileText, Calendar, User, HardDrive, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Search, FileText, Calendar, HardDrive, CheckCircle2, AlertCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { fr } from 'date-fns/locale';
 import { toast } from 'react-hot-toast';
@@ -85,7 +85,7 @@ const DocumentSelector: React.FC<DocumentSelectorProps> = ({
         'DESC'
       );
 
-      if (response && response.data) {
+      if (response?.data) {
         setDocuments(response.data);
         setPagination(response.pagination);
       }
@@ -95,6 +95,27 @@ const DocumentSelector: React.FC<DocumentSelectorProps> = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const performClientSearch = async () => {
+    return await documentsService.semanticFieldSearch(
+      { clientName: filters.clientName },
+      1,
+      itemsPerPage
+    );
+  };
+
+  const performAdvancedSearch = async () => {
+    return await documentsService.advancedSearch(
+      {
+        query: filters.searchQuery,
+        documentType: filters.documentType === 'all' ? '' : filters.documentType,
+        dateFrom: filters.dateFrom,
+        dateTo: filters.dateTo
+      },
+      1,
+      itemsPerPage
+    );
   };
 
   const handleSearch = async () => {
@@ -107,29 +128,11 @@ const DocumentSelector: React.FC<DocumentSelectorProps> = ({
       setLoading(true);
       setCurrentPage(1);
 
-      let response;
-      if (filters.clientName.trim()) {
-        // Use semantic field search for client name
-        response = await documentsService.semanticFieldSearch(
-          { clientName: filters.clientName },
-          1,
-          itemsPerPage
-        );
-      } else {
-        // Use advanced search for other filters
-        response = await documentsService.advancedSearch(
-          {
-            query: filters.searchQuery,
-            documentType: filters.documentType === 'all' ? '' : filters.documentType,
-            dateFrom: filters.dateFrom,
-            dateTo: filters.dateTo
-          },
-          1,
-          itemsPerPage
-        );
-      }
+      const response = filters.clientName.trim() 
+        ? await performClientSearch()
+        : await performAdvancedSearch();
 
-      if (response && response.data) {
+      if (response?.data) {
         setDocuments(response.data);
         setPagination(response.pagination);
       }
@@ -159,7 +162,7 @@ const DocumentSelector: React.FC<DocumentSelectorProps> = ({
 
   const getDocumentTypeInfo = (type: string) => {
     const typeInfo = documentTypes.find(t => t.value === type?.toLowerCase());
-    return typeInfo || { value: type, label: type, financial: false };
+    return typeInfo ?? { value: type, label: type, financial: false };
   };
 
   const formatFileSize = (bytes: number): string => {

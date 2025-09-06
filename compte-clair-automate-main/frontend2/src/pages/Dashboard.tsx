@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FileText, Users, Upload } from 'lucide-react';
 import DashboardCard from '@/components/DashboardCard';
 import FinancialChart from '@/components/FinancialChart';
-// import BilanDemo from '@/components/bilan/BilanDemo'; // Removed demo component
 import { documentsService } from '@/services/documents.service';
 import { usersService } from '@/services/users.service';
 

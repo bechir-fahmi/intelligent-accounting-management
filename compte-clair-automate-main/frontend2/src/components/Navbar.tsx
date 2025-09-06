@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
-import { LogOut, User, Users, Lock, FileText, BarChart3, Calculator } from 'lucide-react';
+import { LogOut, Users, FileText, BarChart3, Calculator } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import UserAvatar from '@/components/UserAvatar';
 import LanguageSwitcher from '@/components/LanguageSwitcher';
